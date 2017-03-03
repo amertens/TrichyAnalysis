@@ -1,11 +1,19 @@
+
+rm(list=ls())
+
+library(dplyr)
+library(foreign)
+
 ###Generating lagged weather variables
-df<-read.csv("Trichy_Weather_Dec07-Apr09_formatted.csv", stringsAsFactors = T)
+setwd("C:/Users/andre/Documents/Trichy analysis")
+df<-read.dta("Trichy_Weather_Dec07-Apr09_formatted.dta")
 
 head(df)
 
 
 #Order data
-df<-arrange(df, year, month, day)
+df<-arrange(df, year, month, day) %>% 
+    subset(., select=c(year, month, day, maxtemp, mintemp, rain, hum0830, hum1730))
 
 
 #Generate average temp

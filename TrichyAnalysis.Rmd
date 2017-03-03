@@ -132,7 +132,7 @@ preW<-cbind(preW,animal.vars) %>%
 
 
 #prescreen via likelihood ratio function
-Wscreen <- washb_prescreen(Y=svy$diar7d,Ws=preW,family="binomial", print=T)
+Wscreen <- washb_prescreen(Y=svy$diar7d,Ws=preW,family="binomial", pval = 0.2 ,print=T)
 
 
 #subset W dataframe to prescreen selected variables
