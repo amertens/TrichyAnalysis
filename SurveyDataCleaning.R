@@ -1,27 +1,6 @@
----
-title: "Trichy Weather Analysis"
-author: "Andrew Mertens"
-date: "October 22, 2016"
-output: html_document
----
+rm(list=ls())
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Abstract
-
-  *  Subject Background  
-  *  Study Background
-  * 
-
-```{r cars}
-summary(cars)
-```
-
-
-##Setup
-```{r}
+library(dplyr)
 library(foreign)
 library(dplyr)
 library(h2o)
@@ -30,14 +9,11 @@ library(tmle)
 library(tmle.npvi)
 library(washb)
 
-```
 
-
-## Summary of the survey data
-
-Load in the data and conduct exploratory analysis on the outcomes
-```{r}
+###Cleaning survey data
 #read in data and subset to relevant variables (excluding covariates to prescreen)
+
+setwd("C:/Users/andre/Documents/Trichy analysis")
 svy<-read.dta("trichy_long_old.dta") %>%
   subset(select=c("vilid","hhid","individ","wpi","round","intdate","stdywk","bdate","mdiar7d", "diar2d", "diar7d", "diar14d","hcgi7d","diardays")) %>%
   filter(!is.na(diar7d))
@@ -53,11 +29,7 @@ table(svy$hcgi7d)
 
 table(svy$diardays)
 
-```
 
-##Prescreen potential covariates
-Read in potential covariates, set factor variables, prescreen for variables using a likelihood ratio test (cutoff p<0.2)
-```{r}
 preW<-read.dta("trichy_long_old.dta") %>%
   filter(!is.na(diar7d)) %>%
   subset(select=c("round","age","sex",
@@ -93,18 +65,27 @@ apply(preW, 2, function(x) length(table(x)))
 #Replace missingness with missing category 99 if the variable is binary or a factor
 #set aside continious variables
 preWcont<-subset(preW, select=c(age,momage))
-preW<-subset(preW, select= -c(age,momage))
+W<-subset(preW, select= -c(age,momage))
 
-preW[is.na(preW)]<-"99"
 
-table(is.na(preW))
+table(is.na(W))
 
-# set factor variables
-preW <- data.frame(apply(preW, 2, as.factor))
-preW <- cbind(preW,preWcont)
-```
+for(i in 1:ncol(W)){
+  W[,i]<-factor(W[,i])
+  if(length(is.na(W[,i]))>0){
+    W[,i]<-addNA(W[,i])
+    levels(W[,i])[length(levels(W[,i]))]<-"miss"
+  }
+}
 
-```{r}
+table(is.na(W))
+
+#Add back in the continious variables
+preW <- cbind(W,preWcont)
+head(preW)
+
+
+
 #Two variables are causing error in prescreen function due to sparsity: "wqsource"  "an_dogcat"
 #Collapse rare factor levels here
 
@@ -129,7 +110,7 @@ transmute(preW,
 preW<-cbind(preW,animal.vars) %>%
   select(-(an_buff:an_dogcat))
 
-
+head(preW)
 
 #prescreen via likelihood ratio function
 Wscreen <- washb_prescreen(Y=svy$diar7d,Ws=preW,family="binomial", pval = 0.2 ,print=T)
@@ -145,26 +126,3 @@ glimpse(df)
 names.svy<-colnames(svy)
 names.W<-colnames(W)
 save(df,names.svy,names.W,file="prescreened_blcov.Rdata")
-```
-
-#Note:
-Need to deal with the wqdate date format variable, and deal with large ammount of missingness in many variables
-
-```{r}
-#create dummy variables for all missing 
-```
-
-
-##Fit base model without weather data
-```{r}
-
-
-```
-
-
-
-## Summary of the weather data
-
-
-Load in data
-
