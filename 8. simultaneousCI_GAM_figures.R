@@ -58,12 +58,12 @@ ulabplot <- function(title) {
 cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 cols <- cbPalette[c(1,3,7)]
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Results/")
-load("C:/Users/andre/Documents/Trichy analysis/Results/temp.unadjusted.GAMfits.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/rain.unadjusted.GAMfits.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/rain.unadjusted.GAMfits.stratified.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/temp.quartiles.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/HRthres.Rdata")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/temp.unadjusted.GAMfits.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.unadjusted.GAMfits.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.unadjusted.GAMfits.stratified.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/temp.quartiles.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/HRthres.Rdata")
 
 
 
@@ -123,7 +123,7 @@ rain<-ggplot(d.rain, aes(x = newd)) +
     theme(strip.background = element_blank())
 
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Figures and Tables/")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
 #pdf("GAMcurves.pdf",width=10,height=8)
 pdf("GAMcurves5.2.pdf",width=5.2,height=4.16)
 
@@ -163,7 +163,7 @@ rainstrat<-ggplot(d.rain.strat, aes(x = newd)) +
 
 
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Figures and Tables/")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
 #pdf("GAMcurves_stratified.pdf",width=10,height=8)
 pdf("GAMcurves_stratified5.2.pdf",width=5.2,height=4.16)
 

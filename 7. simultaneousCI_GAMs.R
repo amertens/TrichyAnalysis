@@ -108,7 +108,7 @@ pred<-data.frame(Y=fitd$Y, X=fitd$Age, pred, Pval=rep(pval, nrow(fitd)))
 #GAM temperature and rainfall fits
 ######################################
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Results/")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
 load("temp.datasets.Rdata")
 
 head(d)
@@ -125,7 +125,7 @@ save(fit.temp7.unadj,fit.temp14.unadj,fit.temp21.unadj, file="temp.unadjusted.GA
 
 
 
-load("C:/Users/andre/Documents/Trichy analysis/Results/rain.datasets.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.datasets.Rdata")
 head(d)
 set.seed(12345)
  fit.rain7.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag7+.1),id=d$id, imputeX=T, gamdf = c(1:10))

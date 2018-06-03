@@ -13,7 +13,7 @@ library(caret)
 
 ###Cleaning survey data
 #read in data and subset to relevant variables (excluding covariates to prescreen)
-setwd("C:/Users/andre/Documents/Trichy analysis/Raw Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
 svy<-read.dta("trichy_long.dta") %>%
   subset(select=c("vilid","hhid","individ","wpi","round","intdate","stdywk","bdate","mdiar7d", "diar2d", "diar7d", "diar14d","hcgi7d","diardays","h2s")) %>%
   filter(!is.na(diar7d))
@@ -186,5 +186,5 @@ names.svy<-colnames(svy)
 names.W<-colnames(W)
 
 save(df,names.svy,names.W,
-     file="C:/Users/andre/Documents/Trichy analysis/Cleaned data/bl_covariates.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/bl_covariates.Rdata")
 

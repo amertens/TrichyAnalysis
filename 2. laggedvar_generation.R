@@ -5,7 +5,7 @@ library(dplyr)
 library(foreign)
 
 ###Generating lagged weather variables
-setwd("C:/Users/andre/Documents/Trichy analysis/Raw Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
 df<-read.dta("Trichy_Weather_Dec07-Apr09_formatted.dta")
 
 head(df)
@@ -58,4 +58,5 @@ for(i in 1:dayslag){
 #save data
 weather<-df
 
-save(weather, file="C:/Users/andre/Documents/Trichy analysis/Cleaned Data/LaggedWeather.Rdata")
+save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/LaggedWeather.Rdata")
+

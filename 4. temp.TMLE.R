@@ -12,8 +12,7 @@ if(!require("tmle")){install.packages("tmle", repos = "http://cran.us.r-project.
 if(!require("caret")){install.packages("caret", repos = "http://cran.us.r-project.org"); library("caret")}
 
 
-
-try(setwd("C:/Users/andre/Documents/Trichy analysis/Cleaned Data"))
+try(setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data"))
 load("bl_covariates.Rdata")
 load("LaggedWeather.Rdata")
 
@@ -125,8 +124,7 @@ temp_quartiles <- data.frame(tempQ_lag7=quantile(d$temp.ave7.lag7)[2:4],
                              tempQ_lag14=quantile(d$temp.ave7.lag14)[2:4],
                              tempQ_lag21=quantile(d$temp.ave7.lag21)[2:4])
 save(temp_quartiles, 
-     file="C:/Users/andre/Documents/Trichy analysis/Results/temp.quartiles.Rdata")
-
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/temp.quartiles.Rdata")
 
 
 
@@ -197,11 +195,11 @@ colnames(temp.unadj)<- c("PR", "ci.lb", "ci.ub", "logPR", "se.logPR",  "Z", "p")
 temp.unadj
 
 save(Mean_lag7, Mean_lag14, Mean_lag21, temp.unadj,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/temp.Results.unadjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/temp.Results.unadjusted.Rdata")
 
 #Save dataset
 save(d, 
-     file="C:/Users/andre/Documents/Trichy analysis/Results/temp.datasets.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/temp.datasets.Rdata")
 
 
 
@@ -276,7 +274,7 @@ for(j in 1:3){
 
 
 save(Mean_lag7, Mean_lag14, Mean_lag21, temp.unadj, temp.adj,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/temp.Results.adjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/temp.Results.adjusted.Rdata")
 
 
 

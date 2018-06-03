@@ -8,7 +8,7 @@ library(washb)
 library(caret)
 
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Cleaned Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Cleaned Data")
 load("bl_covariates.Rdata")
 load("LaggedWeather.Rdata")
 
@@ -356,7 +356,7 @@ plotdf$lag <- plotdf$lag+7
 
 
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Figures and Tables/")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
 #pdf("HRain_sensitivity_figure.pdf",width=10,height=5)
 png("HRain_sensitivity_figure.png",width=8.5,height=4.249999, units="in", res=800)
 

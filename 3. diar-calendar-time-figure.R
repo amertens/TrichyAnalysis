@@ -18,7 +18,7 @@ library(dplyr)
 #---------------------------------------
 # Load the analysis dataset
 #---------------------------------------
-setwd("C:/Users/andre/Documents/Trichy analysis/Cleaned Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data")
 load("bl_covariates.Rdata")
 load("LaggedWeather.Rdata")
 
@@ -135,10 +135,7 @@ summary(rain$n)
 #---------------------------------------
 # make plot w/ color + shaded 95% CIs
 #---------------------------------------
-#pdf("C:/Users/andre/Documents/Trichy analysis/Figures and Tables/DiarWeatherByMonth-ci.pdf",width=12,height=5)
-#tiff(file = "C:/Users/andre/Documents/Trichy analysis/Figures and Tables/DiarWeatherByMonth-ci..tiff", width = 7.5, height = 3.25, units = "in", res=800) 
-pdf("C:/Users/andre/Documents/Trichy analysis/Figures and Tables/DiarWeatherByMonth-ci.pdf",width=8.5,height=3.541666)
-
+pdf("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/DiarWeatherByMonth-ci.pdf",width=8.5,height=3.541666)
 
 # general plotting parameters
 

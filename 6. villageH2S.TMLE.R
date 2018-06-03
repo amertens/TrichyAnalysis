@@ -245,7 +245,7 @@ HR.rainmean21<-rainmean.d %>% group_by(HeavyRain.lag21) %>% summarize(mean.rainf
 save(HR.rainmean7, 
      HR.rainmean14,
      HR.rainmean21,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/villageh2s.HRmean.Results.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/villageh2s.HRmean.Results.Rdata")
 
 
 
@@ -348,7 +348,7 @@ HR.strat.rainmean21<-rainmean.d %>% group_by(LTQ.y, HeavyRain.lag21) %>% summari
 save(HR.strat.rainmean7, 
      HR.strat.rainmean14,
      HR.strat.rainmean21,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/villageh2s.HRmean-stratified.Results.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/villageh2s.HRmean-stratified.Results.Rdata")
 
 
 
@@ -395,12 +395,12 @@ H2S.Hrain.unadj,
 H2s.unadjLT1,
 H2s.unadjLT2,
 H2s.unadjLT3,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/villageH2S.Results.unadjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/villageH2S.Results.unadjusted.Rdata")
 
 #Save dataset
 save(d, 
      dHR,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/villageH2S.datasets.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/villageH2S.datasets.Rdata")
 
 
 

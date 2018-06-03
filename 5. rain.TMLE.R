@@ -8,7 +8,7 @@ library(washb)
 library(caret)
 
 
-setwd("C:/Users/andre/Documents/Trichy analysis/Cleaned Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned Data")
 load("bl_covariates.Rdata")
 load("LaggedWeather.Rdata")
 
@@ -97,7 +97,7 @@ HeavyRainThres<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,
 
 #Save heavy rain threshold
 save(HeavyRainThres, 
-     file="C:/Users/andre/Documents/Trichy analysis/Results/HRthres.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/HRthres.Rdata")
 
 
 
@@ -335,7 +335,7 @@ HR.rainmean21<-rainmean.d %>% group_by(HeavyRain.lag21) %>% summarize(mean.rainf
 save(HR.rainmean7, 
      HR.rainmean14,
      HR.rainmean21,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/HRmean.Results.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/HRmean.Results.Rdata")
 
 
 
@@ -571,7 +571,7 @@ Hrain.unadjLT3
 save(HR.strat.rainmean7, 
      HR.strat.rainmean14,
      HR.strat.rainmean21,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/HRmean-stratified.Results.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/HRmean-stratified.Results.Rdata")
 
 
 
@@ -626,20 +626,16 @@ H2S.Hrain.unadj,
 H2s.unadjLT1,
 H2s.unadjLT2,
 H2s.unadjLT3,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/rain.Results.unadjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/rain.Results.unadjusted.Rdata")
 
 #Save dataset
 save(d, 
      dHR,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/rain.datasets.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/rain.datasets.Rdata")
 
 
 
 
-
-##############
-#Adjusted analysis
-##############
 
 
 
@@ -755,13 +751,13 @@ Hrain.adjLT1,
 Hrain.adjLT2,
 Hrain.adjLT3,
 H2S.Hrain.adj,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/rain.Results.adjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/rain.Results.adjusted.Rdata")
 
 save(
   H2S.adjLT1,
 H2S.adjLT2,
 H2S.adjLT3,
-     file="C:/Users/andre/Documents/Trichy analysis/Results/H2S.Results.adjusted.Rdata")
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/H2S.Results.adjusted.Rdata")
 
 
 
