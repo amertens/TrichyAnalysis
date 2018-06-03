@@ -8,7 +8,7 @@ library(washb)
 library(caret)
 
 
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Cleaned Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned Data")
 load("bl_covariates.Rdata")
 load("LaggedWeather.Rdata")
 

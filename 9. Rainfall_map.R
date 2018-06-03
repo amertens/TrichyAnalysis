@@ -19,7 +19,7 @@ library(foreign)
 
 
 #village locations
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Trichy data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
 gps<-read.csv("VillageGPS.csv", header=T)
 
 #Find mediod gps location for each village
@@ -45,14 +45,14 @@ pol<-data.frame(xmin=75,xmax=85 ,ymin=13 ,ymax=20)
 
 
 #Merge in rainfall averages
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Raw Data")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
 rain<-read.dta("Trichy_Weather_Dec07-Apr09_formatted.dta")
 rain<-rain %>% filter(year==2008) %>% subset(., select=c(month, rain)) %>% group_by(month) %>% summarize(rain=sum(rain))
 dryrain<-sum(rain[1:6,2])
 wetrain<-sum(rain[7:12,2])
 
 
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Raw Data/WorldClim precip rasters")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/WorldClim precip rasters")
 xlim=c(70,85) 
 ylim=c(6,14)
 worldclim <- list()

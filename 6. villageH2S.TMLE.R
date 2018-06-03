@@ -1,7 +1,7 @@
 
 rm(list=ls())
 
-library(dplyr)
+library(tidyverse)
 library(SuperLearner)
 library(tmle)
 library(washb)
@@ -9,8 +9,8 @@ library(caret)
 library(foreign)
 
 
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Trichy data")
-df<-read.dta("Raw Data/trichy_fu_vilwat.dta")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
+df<-read.dta("trichy_fu_vilwat.dta")
 load("Cleaned Data/LaggedWeather.Rdata")
 
 
