@@ -22,7 +22,7 @@ cleantable <- function(x,digits) {
 
 
 #Results tables
-setwd("C:/Users/andre/Documents/Trichy analysis/Results/")
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
 load("temp.Results.unadjusted.Rdata")
 Mean_lag7
 Mean_lag14
@@ -156,7 +156,7 @@ cleantable(HRTab[,-1],2)
 # Heavy rain- stratified
 #----------------------------------------
 
-load("C:/Users/andre/Documents/Trichy analysis/Results/HRmean-stratified.Results.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/HRmean-stratified.Results.Rdata")
 
 
 HRstrat<-data.frame(lag=rep(NA,18),
@@ -336,9 +336,9 @@ cleantable(TempTab[,-1],2)
 
 
 #Supplimentary table 3: h2s in village sources
-load("C:/Users/andre/Documents/Trichy analysis/Results/villageH2S.Results.unadjusted.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/villageh2s.HRmean.Results.Rdata")
-load("C:/Users/andre/Documents/Trichy analysis/Results/villageh2s.HRmean-stratified.Results.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/villageH2S.Results.unadjusted.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/villageh2s.HRmean.Results.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Results/villageh2s.HRmean-stratified.Results.Rdata")
 
 
 vil.h2sTab<-data.frame(lag=rep(NA,24),
