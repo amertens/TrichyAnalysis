@@ -50,6 +50,7 @@ ad$caldate <- as.Date(ad$intdate,format="%d%b%Y")
 
 head(ad$caldate)
 ad$my <- floor_date(ad$caldate,"month")
+ad$wy <- floor_date(ad$caldate,"week")
 
 #create by week for weather
 weather$wy <- floor_date(weather$intdate,"week")
@@ -83,19 +84,19 @@ diar <- diar[order(diar$month),c("month","year","n","mean","sd","se","lb","ub")]
 summary(diar$n)
 
 #---------------------------------------
-# temperature monthly means w/ robust 95% SEs
+# temperature weekly means w/ robust 95% SEs
 #---------------------------------------
-mys <- unique(weather$my)
-temp <- sapply(mys,
+wys <- unique(weather$wy)
+temp <- sapply(wys,
                  function(x) {
-                   washb_mean(weather$avetemp[weather$my==x],
-                              id=c(1:nrow(weather[weather$my==x,])),
+                   washb_mean(weather$avetemp[weather$wy==x],
+                              id=c(1:nrow(weather[weather$wy==x,])),
                               print=F
                    )
                  }
 )
 temp <- data.frame(t(temp))
-temp$month <- as.Date(mys)
+temp$month <- as.Date(wys)
 temp$year<-floor_date(temp$month,"year")
 
 colnames(temp) <- c("n","mean","sd","se","lb","ub","month","year")
@@ -105,15 +106,13 @@ temp <- temp[order(temp$month),c("month","year","n","mean","sd","se","lb","ub")]
 # summarize dist of obs per month
 summary(temp$n)
 
-  xtics <- unique(temp$month) #Save every month 
-  xticsyr <- unique(temp$year) 
 
 
 #---------------------------------------
 # rainfall weekly means w/ robust 95% SEs
 #---------------------------------------
-mys <- unique(weather$wy)
-rain <- sapply(mys,
+wys <- unique(weather$wy)
+rain <- sapply(wys,
                  function(x) {
                    washb_mean(weather$rain[weather$wy==x],
                               id=c(1:nrow(weather[weather$wy==x,])),
@@ -122,12 +121,16 @@ rain <- sapply(mys,
                  }
 )
 rain <- data.frame(t(rain))
-rain$month <- as.Date(mys)
+rain$month <- as.Date(wys)
 rain$year<-floor_date(rain$month,"year")
 colnames(rain) <- c("n","mean","sd","se","lb","ub","month","year")
 rain <- rain[order(rain$month),c("month","year","n","mean","sd","se","lb","ub")]
 
  
+#Grab months and years that weather data was recorded for plot axis
+xtics <- unique(weather$my) #Save every month 
+xticsyr <- unique(temp$year) 
+
 # summarize dist of obs per week
 summary(rain$n)
 
@@ -152,10 +155,10 @@ cols <- c(cgrey,"#56B4E9","#D55E00")
 ytics <- seq(0, 0.05, by=0.01)
 
 # empty plot
-plot(temp$month,
+plot(xtics,
      c(0,diar$mean),
      type="n",
-     ylim=range(ytics),ylab="Diarrhea prevalence (%)",yaxt="n",
+     ylim=range(ytics),ylab="Monthly diarrhea prevalence (%)",yaxt="n",
      xlim=range(xtics),xlab="Date",xaxt="n",
      bty="n",las=1, cex.lab=0.75)#,
      #mar=c(2,3,2,5)+0.1)
@@ -180,21 +183,23 @@ points(diar$month,diar$mean,col=cols[1],pch=19,cex=0.5)
   #overlaid empty plot
   par(new=T)
   ytics <- seq(0, 60, by=10)
+  
+
     #rainfall barplot
-barplot(rain$mean, main=NA, 
+barplot(rain$mean, main=NA,
   	xlab=NA, col=cols[2], ylab=NA,
   	border=NA, axes=F)
   axis(4,at=ytics,las=1,labels=sprintf("%1.0f",ytics))
-  mtext(side = 4, line = 2, cex=0.75, 'Mean weekly rainfall (mm)')
+  mtext(side = 4, line = 2, cex=0.75, 'Weekly mean rainfall (mm)')
   mtext("A)", side=2, line=4.25, adj = 1, las=1, font=2, at=60)
 
 
   ytics <- seq(0, 0.05, by=0.01)
 # empty plot
-plot(temp$month,
+plot(xtics,
      c(0,diar$mean),
      type="n",
-     ylim=range(ytics),ylab="Diarrhea prevalence (%)",yaxt="n",
+     ylim=range(ytics),ylab="Monthly diarrhea prevalence (%)",yaxt="n",
      xlim=range(xtics),xlab="Date",xaxt="n",
      bty="n",las=1, cex.lab=0.75)#,
      #mar=c(2,4,2,6)+0.1)
@@ -231,7 +236,7 @@ points(diar$month,diar$mean,col=cols[1],pch=19,cex=0.5)
               rev(temp$ub)),
           col=alpha(cols[3],alpha=0.2),border=NA)
   axis(4,at=ytics,las=1,labels=sprintf("%1.0f",ytics))
-  mtext(side = 4, line = 2, cex=0.75,  'Mean monthly temperature (C)')
+  mtext(side = 4, line = 2, cex=0.75,  'Weekly mean temperature (C)')
     mtext("B)", side=2, line=4.25, adj = 1, las=1, font=2, at=35)
 
   # temperature lines + points
