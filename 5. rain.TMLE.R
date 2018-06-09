@@ -6,7 +6,7 @@ library(SuperLearner)
 library(tmle)
 library(washb)
 library(caret)
-
+library(zoo)
 
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned Data")
 load("bl_covariates.Rdata")
@@ -18,6 +18,12 @@ load("LaggedWeather.Rdata")
 #Weather data processing
 ###################
 head(weather)
+
+#Get quartiles cutpoints of overall weekly mean
+weekly_rain<-rollmean(weather$avetemp,7,fill=NA, align="right")
+rainQ <- quantile(weekly_rain, na.rm=T)[2:4]
+
+#Calculate moving average with different lag times
 
 rainvars<-sapply(1:100, function(x) paste0("rain.",x))
 rain<-subset(weather, select=c("year","month","day",rainvars))
@@ -241,71 +247,6 @@ d%>%
 
 
 
-####################
-#Unadjusted MH tests
-####################
-
-rain_tmle<-function(d,Wvars=NULL,weather="rain.ave7.lag7",q=c(1,4),cutoff=4, library=NULL){
-colnames(d)[which( colnames(d)==paste0(weather))]="weather"
-
-#Quantile non-zero rain days
-ntiles<-as.vector(quantile(d$weather[d$weather!=0], probs= seq(0, 1, 0.3333))[c(2,3)])
-
-d$Q<-1
-d$Q[d$weather>0]<-2
-d$Q[d$weather>ntiles[1]]<-3
-d$Q[d$weather>ntiles[2]]<-4
-table(d$Q)
-
-df<-d %>%
-  subset(Q==q[1]|Q==q[2]) %>%
-  mutate(A=ifelse(Q==q[2],1,0))
-
-  a=round(sum(df$A==1 & df$Y==1, na.rm=T),0)
-  b=round(sum(df$A==1 & df$Y==0, na.rm=T),0)
-  c=round(sum(df$A==0 & df$Y==1, na.rm=T),0)
-  d=round(sum(df$A==0 & df$Y==0, na.rm=T),0)
-  
-if(is.null(Wvars)){
-    res<-as.numeric(washb_glm(Y=df$Y, tr=df$A, id=df$id, contrast=c(0,1), family=binomial(link='log'))$TR)
-    res<-c(a, b, c, d, res)
-    names(res) <- c("a","b","c","d","PR,", "ci.lb", "ci.ub", "logPR", "se.logPR", "Z", "p")
-}else{
-      res<-tmle(Y=df$Y,A=df$A,W=W, family="binomial",Q.SL.library=library,g.SL.library=library,id=df$id)
-  }  
-  return(res)
-}
-
-rain.unadj1v4<-rain.unadj2v4<-rain.unadj1v2<-rain.unadj1v3<-rain.unadj3v4<-matrix(NA, nrow=3, ncol=11)
-for(j in 1:3){
-  i<-j*7
-  set.seed(12345)
-  rain.unadj1v2[j,]<-rain_tmle(d=d,W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,2),cutoff=4)
-  rain.unadj1v3[j,]<-rain_tmle(d=d,W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,3),cutoff=4)
-  rain.unadj1v4[j,]<-rain_tmle(d=d,W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,4),cutoff=4)
-  rain.unadj2v4[j,]<-rain_tmle(d=d,W=NULL,weather=paste0("rain.ave7.lag",i),q=c(2,4),cutoff=4)
-  rain.unadj3v4[j,]<-rain_tmle(d=d,W=NULL,weather=paste0("rain.ave7.lag",i),q=c(3,4),cutoff=4)
-}
-
-rain.unadj1v2
-rain.unadj1v3
-rain.unadj1v4
-rain.unadj2v4
-rain.unadj3v4
-
-rain.unadj<-NULL
-for(i in 1:3){
-  rain.unadj<-rbind(rain.unadj,rain.unadj1v2[i,],rain.unadj1v3[i,],rain.unadj1v4[i,])
-}
-rownames(rain.unadj)<-c("lag7 1v2","lag7 1v3","lag7 1v4",
-                        "lag14 1v2","lag14 1v3","lag14 1v4",
-                        "lag21 1v2","lag21 1v3","lag21 1v4")
-colnames(rain.unadj)<- c("a","b","c","d","PR,", "ci.lb", "ci.ub", "logPR", "se.logPR",  "Z", "p")
-rain.unadj
-
-
-
-
 ################
 #Heavy rain events
 ################
@@ -466,67 +407,6 @@ H2S.Hrain.unadj
 #Stratified by long-term rain trends
 ##############
 
-rain.unadj1v4LT1<-rain.unadj2v4LT1<-rain.unadj1v2LT1<-rain.unadj1v3LT1<-rain.unadj3v4LT1<-matrix(NA, nrow=3, ncol=11)
-rain.unadj1v4LT2<-rain.unadj2v4LT2<-rain.unadj1v2LT2<-rain.unadj1v3LT2<-rain.unadj3v4LT2<-matrix(NA, nrow=3, ncol=11)
-rain.unadj1v4LT3<-rain.unadj2v4LT3<-rain.unadj1v2LT3<-rain.unadj1v3LT3<-rain.unadj3v4LT3<-matrix(NA, nrow=3, ncol=11)
-
-for(j in 1:3){
-  LT<-d$LT8
-  if(j==2){LT<-d$LT15}
-  if(j==3){LT<-d$LT22}
-
-  ntiles<-as.vector(quantile(LT, probs = seq(0, 1, 0.3333), na.rm=T)[2:3])
-  d$LTQ<-2
-  d$LTQ[LT < ntiles[1]]<-1
-  d$LTQ[LT >= ntiles[2]]<-3
-  
-  
-  i<-j*7
-  set.seed(12345)
-  rain.unadj1v2LT1[j,]<-rain_tmle(d=d[d$LTQ==1,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,2),cutoff=4)
-  rain.unadj1v3LT1[j,]<-rain_tmle(d=d[d$LTQ==1,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,3),cutoff=4)
-  rain.unadj1v4LT1[j,]<-rain_tmle(d=d[d$LTQ==1,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,4),cutoff=4)
-  rain.unadj2v4LT1[j,]<-rain_tmle(d=d[d$LTQ==1,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(2,4),cutoff=4)
-  rain.unadj3v4LT1[j,]<-rain_tmle(d=d[d$LTQ==1,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(3,4),cutoff=4)
-  
-  rain.unadj1v2LT2[j,]<-rain_tmle(d=d[d$LTQ==2,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,2),cutoff=4)
-  rain.unadj1v3LT2[j,]<-rain_tmle(d=d[d$LTQ==2,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,3),cutoff=4)
-  rain.unadj1v4LT2[j,]<-rain_tmle(d=d[d$LTQ==2,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,4),cutoff=4)
-  rain.unadj2v4LT2[j,]<-rain_tmle(d=d[d$LTQ==2,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(2,4),cutoff=4)
-  rain.unadj3v4LT2[j,]<-rain_tmle(d=d[d$LTQ==2,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(3,4),cutoff=4)
-  
-  rain.unadj1v2LT3[j,]<-rain_tmle(d=d[d$LTQ==3,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,2),cutoff=4)
-  rain.unadj1v3LT3[j,]<-rain_tmle(d=d[d$LTQ==3,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,3),cutoff=4)
-  rain.unadj1v4LT3[j,]<-rain_tmle(d=d[d$LTQ==3,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(1,4),cutoff=4)
-  rain.unadj2v4LT3[j,]<-rain_tmle(d=d[d$LTQ==3,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(2,4),cutoff=4)
-  rain.unadj3v4LT3[j,]<-rain_tmle(d=d[d$LTQ==3,],W=NULL,weather=paste0("rain.ave7.lag",i),q=c(3,4),cutoff=4)
-}
-
-
-rain.unadj1v4LT1
-rain.unadj1v4LT2
-rain.unadj1v4LT3
-
-
-rain.unadjLT3<-rain.unadjLT2<-rain.unadjLT1<-NULL
-for(i in 1:3){
-  rain.unadjLT1<-rbind(rain.unadjLT1,rain.unadj1v2LT1[i,],rain.unadj1v3LT1[i,],rain.unadj1v4LT1[i,])
-  rain.unadjLT2<-rbind(rain.unadjLT2,rain.unadj1v2LT2[i,],rain.unadj1v3LT2[i,],rain.unadj1v4LT2[i,])
-  rain.unadjLT3<-rbind(rain.unadjLT3,rain.unadj1v2LT3[i,],rain.unadj1v3LT3[i,],rain.unadj1v4LT3[i,])
-
-}
-rownames(rain.unadjLT3)<-rownames(rain.unadjLT2)<-rownames(rain.unadjLT1)<-c(
-                        "lag7 1v2","lag7 1v3","lag7 1v4",
-                        "lag14 1v2","lag14 1v3","lag14 1v4",
-                        "lag21 1v2","lag21 1v3","lag21 1v4")
-colnames(rain.unadjLT3)<-colnames(rain.unadjLT2)<-colnames(rain.unadjLT1)<- c("a","b","c","d","PR,", "ci.lb", "ci.ub", "logPR", "se.logPR",  "Z", "p")
-
-rain.unadjLT1
-rain.unadjLT2
-rain.unadjLT3
-
-
-
 
 #heavy rain
 Hrain.unadjLT3<-Hrain.unadjLT2<-Hrain.unadjLT1<-matrix(NA, nrow=3, ncol=11)
@@ -537,9 +417,9 @@ Hrain.unadjLT3<-Hrain.unadjLT2<-Hrain.unadjLT1<-matrix(NA, nrow=3, ncol=11)
   dHR$LTQ[LT >= ntiles[2]]<-3
 rainmean.d <- merge(d, dHR,  by=c("intdate","id"), all.x = T, all.y = T)
 HR.strat.rainmean7<-rainmean.d %>% group_by(LTQ.y, HeavyRain.lag7) %>% summarize(mean.rainfall=mean(rain.ave7.lag7, na.rm=T), mean.h2s=mean(h2s.x, na.rm=T)) %>% as.data.frame()
-  Hrain.unadjLT1[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==1 & (d$rain.ave7.lag7==0 | dHR$HeavyRain.lag7==1),],i=7)
-  Hrain.unadjLT2[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==2 & (d$rain.ave7.lag7==0 | dHR$HeavyRain.lag7==1),],i=7)
-  Hrain.unadjLT3[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==3 & (d$rain.ave7.lag7==0 | dHR$HeavyRain.lag7==1),],i=7)
+  Hrain.unadjLT1[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==1,],i=7)
+  Hrain.unadjLT2[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==2,],i=7)
+  Hrain.unadjLT3[1,]<-HeavyRainTMLE(dat=dHR[dHR$LTQ==3,],i=7)
   
   LT<-dHR$LT15
   ntiles<-as.vector(quantile(LT, probs = seq(0, 1, 0.3333), na.rm=T)[2:3])
@@ -614,10 +494,7 @@ H2s.unadjLT3
 
 
 #save unadjusted objects
-save(rain.unadj, 
-     rain.unadjLT1,
-rain.unadjLT2,
-rain.unadjLT3,
+save(
 Hrain.unadj,
 Hrain.unadjLT1,
 Hrain.unadjLT2,

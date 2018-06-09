@@ -10,6 +10,7 @@ if(!require("dplyr")){install.packages("dplyr", repos = "http://cran.us.r-projec
 if(!require("SuperLearner")){install.packages("SuperLearner", repos = "http://cran.us.r-project.org"); library("SuperLearner")}
 if(!require("tmle")){install.packages("tmle", repos = "http://cran.us.r-project.org"); library("tmle")}
 if(!require("caret")){install.packages("caret", repos = "http://cran.us.r-project.org"); library("caret")}
+if(!require("zoo")){install.packages("zoo", repos = "http://cran.us.r-project.org"); library("zoo")}
 
 
 try(setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data"))
@@ -23,9 +24,13 @@ load("LaggedWeather.Rdata")
 ###################
 head(weather)
 
+#Get quartiles cutpoints of overall weekly mean
+weekly_temp<-rollmean(weather$avetemp,7,fill=NA, align="right")
+tempQ <- quantile(weekly_temp, na.rm=T)[2:4]
 
+#Calculate moving average with different lag times
 tempvars<-sapply(1:100, function(x) paste0("at.",x))
-temp<-subset(weather, select=c("year","month","day",tempvars))
+temp<-subset(weather, select=c("year","month","day","avetemp",tempvars))
 
 #change temp vars to numeric:
 temp<-apply(temp, 2, function(x) as.numeric(as.character(x))) 
@@ -44,8 +49,8 @@ for(i in 1:21){
   avetemp[,i]<-ave.window(i, 7, "at", temp)
   ave.names[i]<- paste0("temp.ave7.lag",i)
 }
-avetemp<-cbind(temp[,1:3],avetemp)
-colnames(avetemp)[4:ncol(avetemp)]<-ave.names
+avetemp<-cbind(temp[,1:4],avetemp)
+colnames(avetemp)[5:ncol(avetemp)]<-ave.names
 avetemp<-as.data.frame(avetemp)
 
 
@@ -120,9 +125,12 @@ Mean_lag21<-d%>%
   summarize(quart.n=n(),meantemp=mean(temp.ave7.lag21),meandiar=mean(Y), meanH2s=mean(H2S, na.rm=T), sumH2s=sum(H2S, na.rm=T))
 
 #Save quartile cutoffs
-temp_quartiles <- data.frame(tempQ_lag7=quantile(d$temp.ave7.lag7)[2:4],
+temp_quartiles <- data.frame(tempQ=quantile(d$avetemp)[2:4],
+                             tempQ_lag7=quantile(d$temp.ave7.lag7)[2:4],
                              tempQ_lag14=quantile(d$temp.ave7.lag14)[2:4],
                              tempQ_lag21=quantile(d$temp.ave7.lag21)[2:4])
+
+
 save(temp_quartiles, 
      file="C:/Users/andre/Dropbox/Trichy analysis/Results/temp.quartiles.Rdata")
 
@@ -135,10 +143,18 @@ save(temp_quartiles,
 
 quart_tmle<-function(d,Wvars=NULL,weather="temp.ave7.lag7",q=c(1,4),cutoff=4, library=NULL){
 colnames(d)[which( colnames(d)==paste0(weather))]="weather"
-df<-d%>%
-  mutate(quartile = ntile(weather, cutoff))%>%
-  subset(quartile==q[1]|quartile==q[2])%>%
-  mutate(A=ifelse(quartile==q[2],1,0))
+
+# df<-d%>%
+#   mutate(quartile = ntile(weather, cutoff))%>%
+#   subset(quartile==q[1]|quartile==q[2])%>%
+#   mutate(A=ifelse(quartile==q[2],1,0))
+
+d$quartile<-cut(d$weather, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+
+df <- d[d$quartile==levels(d$quartile)[q[1]]|
+           d$quartile==levels(d$quartile)[q[2]],]
+df$A=ifelse(df$quartile==levels(df$quartile)[q[2]],1,0)
+
 print(table(df$Y, df$quartile))
 
 if(!is.null(Wvars)){
