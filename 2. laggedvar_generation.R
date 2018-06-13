@@ -3,6 +3,7 @@ rm(list=ls())
 
 library(dplyr)
 library(foreign)
+library(zoo)
 
 ###Generating lagged weather variables
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
@@ -59,4 +60,192 @@ for(i in 1:dayslag){
 weather<-df
 
 save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/LaggedWeather.Rdata")
+
+
+
+
+#--------------------------------------
+#  Clean weather data into exposure datasets
+#--------------------------------------
+
+
+
+
+###################
+#Temperature data processing
+###################
+head(weather)
+
+
+#Get quartiles cutpoints of overall weekly mean
+weekly_temp<-rollmean(weather$avetemp,7,fill=NA, align="right")
+tempQ <- as.numeric(quantile(weekly_temp, na.rm=T)[2:4])
+
+#Calculate moving average with different lag times
+
+tempvars<-sapply(1:100, function(x) paste0("at.",x))
+temp<-subset(weather, select=c("year","month","day",tempvars))
+
+#change temp vars to numeric:
+temp<-apply(temp, 2, function(x) as.numeric(as.character(x))) 
+
+
+ave.window<-function(i, winsize, var, data){
+  col<-which(colnames(data) %in% paste0(var,".",i))
+  windowmean<-NA
+  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) mean(x)))
+  return(windowmean)
+}
+
+avetemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
+ave.names<-rep(NA, 21)
+for(i in 1:21){
+  avetemp[,i]<-ave.window(i, 7, "at", temp)
+  ave.names[i]<- paste0("temp.ave7.lag",i)
+}
+avetemp<-cbind(temp[,1:3],avetemp)
+colnames(avetemp)[4:ncol(avetemp)]<-ave.names
+avetemp<-as.data.frame(avetemp)
+
+
+#Set to date format for merge
+avetemp$intdate<-as.Date(paste(avetemp$month,avetemp$day,avetemp$year, sep="/"),"%m/%d/%Y")
+avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
+
+#Quartile temperatures
+avetemp$tempQ1<-cut(avetemp$temp.ave7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ7<-cut(avetemp$temp.ave7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ14<-cut(avetemp$temp.ave7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ21<-cut(avetemp$temp.ave7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+
+
+
+
+###################
+#Rain data processing
+###################
+head(weather)
+
+#Calculate moving average with different lag times
+
+rainvars<-sapply(1:100, function(x) paste0("rain.",x))
+rain<-subset(weather, select=c("year","month","day",rainvars))
+
+#Change "trace" to 0.1 in rainfall variables
+for(i in 1:100){
+  levels(rain[,3+i])[which(levels(rain[,3+i])=="Trace")]<-"0.1"
+}
+
+#change rain vars to numeric:
+rain<-apply(rain, 2, function(x) as.numeric(as.character(x))) 
+
+
+ave.window<-function(i, winsize, var, data){
+  col<-which(colnames(data) %in% paste0(var,".",i))
+  windowmean<-NA
+  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) mean(x))) #NOTE: This does not computes averages when there are NA's
+    return(windowmean)
+}
+
+averain<-matrix(data=NA,nrow=nrow(rain),ncol=21)
+ave.names<-rep(NA, 21)
+for(i in 1:21){
+  averain[,i]<-ave.window(i, 7, "rain", rain)
+  ave.names[i]<- paste0("rain.ave7.lag",i)
+}
+averain<-cbind(rain[,1:3],averain)
+colnames(averain)[4:ncol(averain)]<-ave.names
+averain<-as.data.frame(averain)
+
+#Create long term rain average
+
+#60 day mean
+bimonth_rain<-rollmean(weather$rain,60,fill=NA, align="right")
+LTrainQ <- as.numeric(quantile(bimonth_rain,probs = seq(0, 1, 1/3), na.rm=T)[2:3])
+
+#set i to 7 days after the associated 7-day lagged variable
+averain$LT1<-ave.window(8, 60, "rain", rain)
+averain$LT8<-ave.window(15, 60, "rain", rain)
+averain$LT15<-ave.window(22, 60, "rain", rain)
+averain$LT22<-ave.window(29, 60, "rain", rain)
+
+averain$LT1_T<-cut(averain$LT1, breaks = c(0,LTrainQ,999), labels=c("T1","T2","T3")) 
+averain$LT8_T<-cut(averain$LT8, breaks = c(0,LTrainQ,999), labels=c("T1","T2","T3")) 
+averain$LT15_T<-cut(averain$LT15, breaks = c(0,LTrainQ,999), labels=c("T1","T2","T3")) 
+averain$LT22_T<-cut(averain$LT22, breaks = c(0,LTrainQ,999), labels=c("T1","T2","T3")) 
+
+table(averain$LT8_T)
+table(averain$LT15_T)
+table(averain$LT22_T)
+
+
+#Set date to date format for merge
+averain$intdate<-as.Date(paste(averain$month,averain$day,averain$year, sep="/"),"%m/%d/%Y")
+LT <- subset(averain, select=c(intdate, rain.ave7.lag1, rain.ave7.lag7, rain.ave7.lag14, rain.ave7.lag21, LT1, LT8, LT15, LT22, LT1_T, LT8_T, LT15_T, LT22_T))
+
+
+#Calculate heavy rainfall events
+#90th percentile of rainfall
+HeavyRainThres<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[9])
+
+
+HeavyRain<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres,1,0))
+table(HeavyRain)
+
+ 
+
+HeavyRain.window<-function(i, winsize, var, data){
+  col<-which(colnames(data) %in% paste0(var,".",i))
+  windowmean<-NA
+  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) ifelse(sum(x)>0,1,0)))
+  return(windowmean)
+}
+
+
+PriorHeavyRain<-matrix(data=NA,nrow=nrow(rain),ncol=21)
+PriorHeavyRain.names<-rep(NA, 21)
+for(i in 1:21){
+  PriorHeavyRain[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain)
+  PriorHeavyRain.names[i]<- paste0("HeavyRain.lag",i)
+}
+PriorHeavyRain<-cbind(rain[,1:3],PriorHeavyRain)
+colnames(PriorHeavyRain)[4:ncol(PriorHeavyRain)]<-PriorHeavyRain.names
+PriorHeavyRain<-as.data.frame(PriorHeavyRain)
+head(PriorHeavyRain,30)
+
+
+
+#--------------------------------------
+#Load and merge in survey data
+#--------------------------------------
+
+
+ load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
+
+#merge survey and weather
+dim(survey)
+dim(avetemp)
+d<-merge(survey, avetemp, by="intdate", all.x = F, all.y = F) 
+dim(d)
+
+colnames(d)
+
+
+#Set to date format for merge
+PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21))
+
+
+
+#merge suvery and weather
+dim(survey)
+dim(PriorHeavyRain)
+d<-merge(d,PriorHeavyRain, by="intdate", all.x = F, all.y = F)  
+d<-merge(d,LT, by="intdate", all.x = T, all.y = F) 
+dim(d)
+
+
+colnames(d)
+
+save(d, tempQ, LT, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
 

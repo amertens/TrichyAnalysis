@@ -1,12 +1,11 @@
+
+
+
+
 rm(list=ls())
 
-library(dplyr)
+library(tidyverse)
 library(foreign)
-library(dplyr)
-library(h2o)
-library(SuperLearner)
-library(tmle)
-library(tmle.npvi)
 library(washb)
 library(caret)
 
@@ -185,6 +184,45 @@ glimpse(df)
 names.svy<-colnames(svy)
 names.W<-colnames(W)
 
+
+
+###################
+#Set outcomes and 
+###################
+
+# Expand out factors into indicators 
+dim(df)
+df<-df[,-5] #remove duplicate "round" variable
+head(df)
+
+Y<-df$diar7d
+table(is.na(df$individ))
+table(is.na(df$hhid))
+
+
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#id<-df$vilid  #SE's clusted on village id
+id<-df$hhid  #SE's clusted on house id
+#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+intdate<-df$intdate
+Wfac<-subset(df,select= -c(hhid,individ,intdate,bdate,mdiar7d, diar2d, diar7d, diar14d, hcgi7d, diardays, round, h2s ))
+colnames(Wfac)
+
+H2S<-df$h2s
+
+#Check missingness of W
+table(is.na(Wfac))
+
+#Save variable names
+Wvars<-colnames(Wfac)
+
+survey<-cbind(intdate,Y,id,H2S,Wfac)
+
+
+
 save(df,names.svy,names.W,
      file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/bl_covariates.Rdata")
 
+save(survey, Wvars, 
+     file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
