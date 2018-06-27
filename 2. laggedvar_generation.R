@@ -4,6 +4,7 @@ rm(list=ls())
 library(dplyr)
 library(foreign)
 library(zoo)
+library(usdm)
 
 ###Generating lagged weather variables
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
@@ -19,6 +20,10 @@ df<-arrange(df, year, month, day) %>%
 #Generate average temp
 df$avetemp<-(df$maxtemp+df$mintemp)/2
 
+
+# examine correlation between temperature and rainfall
+cor.test(df$avetemp, df$rain)
+vif(data.frame(df$avetemp, df$rain))
 
 
 #Generate lagged ave temp
@@ -119,6 +124,63 @@ avetemp$tempQ14<-cut(avetemp$temp.ave7.lag14, breaks = c(0,tempQ,999), labels=c(
 avetemp$tempQ21<-cut(avetemp$temp.ave7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 
 
+# Minimum temp
+min.window<-function(i, winsize, var, data){
+  col<-which(colnames(data) %in% paste0(var,".",i))
+  windowmean<-NA
+  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) min(x)))
+  return(windowmean)
+}
+
+mintemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
+min.names<-rep(NA, 21)
+for(i in 1:21){
+  mintemp[,i]<-min.window(i, 7, "at", temp)
+  min.names[i]<- paste0("temp.min7.lag",i)
+}
+mintemp<-cbind(temp[,1:3],mintemp)
+colnames(mintemp)[4:ncol(mintemp)]<-min.names
+mintemp<-as.data.frame(mintemp)
+
+
+#Set to date format for merge
+mintemp$intdate<-as.Date(paste(mintemp$month,mintemp$day,mintemp$year, sep="/"),"%m/%d/%Y")
+mintemp<-subset(mintemp, select=c(intdate, temp.min7.lag7, temp.min7.lag14, temp.min7.lag21))
+
+#Quartile temperatures
+mintemp$mintempQ1<-cut(mintemp$temp.min7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+mintemp$mintempQ7<-cut(mintemp$temp.min7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+mintemp$mintempQ14<-cut(mintemp$temp.min7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+mintemp$mintempQ21<-cut(mintemp$temp.min7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+
+# Maximum temp
+max.window<-function(i, winsize, var, data){
+  col<-which(colnames(data) %in% paste0(var,".",i))
+  windowmean<-NA
+  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) max(x)))
+  return(windowmean)
+}
+
+maxtemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
+max.names<-rep(NA, 21)
+for(i in 1:21){
+  maxtemp[,i]<-max.window(i, 7, "at", temp)
+  max.names[i]<- paste0("temp.max7.lag",i)
+}
+maxtemp<-cbind(temp[,1:3],maxtemp)
+colnames(maxtemp)[4:ncol(maxtemp)]<-max.names
+maxtemp<-as.data.frame(maxtemp)
+
+
+#Set to date format for merge
+maxtemp$intdate<-as.Date(paste(maxtemp$month,maxtemp$day,maxtemp$year, sep="/"),"%m/%d/%Y")
+maxtemp<-subset(maxtemp, select=c(intdate, temp.max7.lag7, temp.max7.lag14, temp.max7.lag21))
+
+#Quartile temperatures
+maxtemp$maxtempQ1<-cut(maxtemp$temp.max7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+maxtemp$maxtempQ7<-cut(maxtemp$temp.max7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+maxtemp$maxtempQ14<-cut(maxtemp$temp.max7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+maxtemp$maxtempQ21<-cut(maxtemp$temp.max7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 
 
 ###################
@@ -185,12 +247,18 @@ LT <- subset(averain, select=c(intdate, rain.ave7.lag1, rain.ave7.lag7, rain.ave
 
 
 #Calculate heavy rainfall events
-#90th percentile of rainfall
+#80th percentile of rainfall on rainy days
 HeavyRainThres<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[9])
+
+#90th percentile of rainfall on any days
+HeavyRainThres90<-as.numeric(quantile(rain,probs = seq(0, 1, 0.1) ,na.rm=T)[10])
 
 
 HeavyRain<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres,1,0))
 table(HeavyRain)
+
+HeavyRain90<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres90,1,0))
+table(HeavyRain90)
 
  
 
@@ -215,6 +283,18 @@ head(PriorHeavyRain,30)
 
 
 
+PriorHeavyRain90<-matrix(data=NA,nrow=nrow(rain),ncol=21)
+PriorHeavyRain90.names<-rep(NA, 21)
+for(i in 1:21){
+  PriorHeavyRain90[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain90)
+  PriorHeavyRain90.names[i]<- paste0("HeavyRain90.lag",i)
+}
+PriorHeavyRain90<-cbind(rain[,1:3],PriorHeavyRain90)
+colnames(PriorHeavyRain90)[4:ncol(PriorHeavyRain90)]<-PriorHeavyRain90.names
+PriorHeavyRain90<-as.data.frame(PriorHeavyRain90)
+head(PriorHeavyRain90,30)
+
+
 #--------------------------------------
 #Load and merge in survey data
 #--------------------------------------
@@ -227,7 +307,9 @@ dim(survey)
 dim(avetemp)
 d<-merge(survey, avetemp, by="intdate", all.x = F, all.y = F) 
 dim(d)
-
+d<-merge(d, mintemp, by="intdate", all.x = F, all.y = F) 
+d<-merge(d, maxtemp, by="intdate", all.x = F, all.y = F) 
+dim(d)
 colnames(d)
 
 
@@ -235,17 +317,21 @@ colnames(d)
 PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
 PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21))
 
+PriorHeavyRain90$intdate<-as.Date(paste(PriorHeavyRain90$month,PriorHeavyRain90$day,PriorHeavyRain90$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain90<-subset(PriorHeavyRain90, select=c(intdate, HeavyRain90.lag1, HeavyRain90.lag7,HeavyRain90.lag14,HeavyRain90.lag21))
+
 
 
 #merge suvery and weather
 dim(survey)
 dim(PriorHeavyRain)
 d<-merge(d,PriorHeavyRain, by="intdate", all.x = F, all.y = F)  
+d<-merge(d,PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,LT, by="intdate", all.x = T, all.y = F) 
 dim(d)
 
 
 colnames(d)
 
-save(d, tempQ, LT, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
+save(d, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
 
