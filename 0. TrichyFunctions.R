@@ -2,6 +2,7 @@
 
 
 
+
 ####################
 #Quartile analysis function
 ####################
@@ -160,6 +161,52 @@ if(is.null(Wvars)){
 
 
 
+####################
+# GAMM AR1 functions
+####################
+
+
+
+#Make GAMM analysis function
+gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
+  df <-data %>% subset(., select=c("Y","stdywk", "individ", "vilid",Avar))
+  colnames(df)[colnames(df)==Avar] <- "A"
+  df <-df[!is.na(df$A),]
+  nlevels <- length(unique(df$A))
+  
+  m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family="binomial")
+ 
+  res<-summary(m$gam)
+  #print(res)
+  resdf <- data.frame(outcome=rep(Yvar,nlevels-1), exposure=rep(Avar,nlevels-1), 
+                      PR=exp(res$p.coeff)[2:nlevels], 
+                      ci.lb=exp(res$p.coeff[2:nlevels] - res$se[2:nlevels] * 1.96), 
+                      ci.ub=exp(res$p.coeff[2:nlevels] + res$se[2:nlevels] * 1.96))
+  if(is.null(strat)){
+    resdf$strat="Unstratified"
+  }else{
+    resdf$strat=strat
+  }
+  return(resdf)
+}
+
+trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL){
+  if(is.null(strat)){
+    res<-gammAR1(data=d, Avar=A, Yvar=Y, strat=NULL)
+  }else{
+    V= d[,strat]
+    d<-d[!is.na(V),]
+    V<-factor(V[!is.na(V)])
+    res<-NULL
+    for(i in 1:length(unique(V))){
+      dsub= d[V==levels(V)[i],]
+      res_strat <- gammAR1(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i])
+      res<-rbind(res, res_strat)
+    }
+    
+  }
+  return(res)
+}
 
 
 
