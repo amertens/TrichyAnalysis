@@ -32,13 +32,15 @@ table(svy$diardays)
 
 preW<-read.dta("trichy_long.dta") %>%
   filter(!is.na(diar7d)) %>%
-  subset(select=c("round","age","sex", 
+  subset(select=c("vilid",
+                  "round","age","sex", 
                   "bfcur","sanOD","sanlat","primwat",
                   "soil","thatch","radio","tv","cell","bank","moto","bike","mosq","stove","fuel1","fuel2", #assets
                   "anygrp","shgw","agri","elec","land","ownhome",
                   "pceduc","pclit","momage","momwork", # education
                   "rooms","totp","sc","kitchen","kitchvent", #house
-                  "hwflies","hwwater","hwsoap","hwash","hwtow","hwsink","hwcntwat","hwcntsoap", #handwashing station
+                  "hwflies","hwwater","hwsoap","hwash","hwtow","hwsink", #handwashing station
+                  #"hwcntwat","hwcntsoap", Don't include count of HW behavior. Great missingness, and redundant with HW indicators
                   "hw1","hw2","hw3","hw4","hw5","hw6","hw7","hw8","hw9","hw10","hw11","hw12", #handwash w/ water
                   "hws1","hws2","hws3","hws4","hws5","hws6","hws7","hws8","hws9","hws10","hws11","hws12", #handwash w/soap
                   "boil_freq","boil_ready","boil_min","boil_present","wqsource","wqcol","wstore","wboil", #watertreat
@@ -51,6 +53,11 @@ preW<-read.dta("trichy_long.dta") %>%
                   #"chobs_hand","chobs_nails","chobs_face","chobs_cloth","chobs_nocloth","chobs_shoes", #Don't include because may vary with rainfall/muddiness
                   "qF1")) #asset composite index
 
+#Calculate village level open defication
+villOD <- preW %>% group_by(vilid) %>% summarize(villOD=mean(sanOD)) %>% as.data.frame()
+summary(villOD$villOD)
+preW <- left_join(preW, villOD, by="vilid")
+preW <- preW %>% subset(., select = -c(vilid))
 
 #table 1 summary
 tab1 <- read.dta("trichy_long.dta") %>% filter(round==0) %>% 
@@ -109,15 +116,15 @@ preW<-cbind(preW,animal.vars) %>%
 
 
 #Check missingness of continious variables
-colnames(d.miss)
+table(is.na(preW$age))
 table(is.na(preW$momage))
-table(is.na(preW$hwcntwat))
-table(is.na(preW$hwcntsoap))
+table(is.na(preW$villOD))
+
 
 #Replace missingness with missing category 99 if the variable is binary or a factor
 #set aside continious variables
-preWcont<-subset(preW, select=c(age,momage, hwcntwat, hwcntsoap))
-W<-subset(preW, select= -c(age,momage, hwcntwat, hwcntsoap))
+preWcont<-subset(preW, select=c(age,momage, villOD))
+W<-subset(preW, select= -c(age,momage, villOD))
 
 
 table(is.na(W))
@@ -201,12 +208,12 @@ table(is.na(df$hhid))
 
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-#id<-df$vilid  #SE's clusted on village id
-id<-df$hhid  #SE's clusted on house id
+id<-df$vilid  #SE's clusted on village id
+#id<-df$hhid  #SE's clusted on house id
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 intdate<-df$intdate
-Wfac<-subset(df,select= -c(hhid,individ,intdate,bdate,mdiar7d, diar2d, diar7d, diar14d, hcgi7d, diardays, round, h2s ))
+Wfac<-subset(df,select= -c(hhid,intdate,bdate,mdiar7d, diar2d, diar7d, diar14d, hcgi7d, diardays, h2s ))
 colnames(Wfac)
 
 H2S<-df$h2s
@@ -216,7 +223,7 @@ table(is.na(Wfac))
 
 #Save variable names
 Wvars<-colnames(Wfac)
-
+Wvars <- Wvars[-c(1:2)] #drop ID variables from adjustment covariates
 survey<-cbind(intdate,Y,id,H2S,Wfac)
 
 
