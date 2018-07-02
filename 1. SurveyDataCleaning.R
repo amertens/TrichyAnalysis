@@ -82,7 +82,7 @@ fivenum(tab1$age)
 fivenum(tab1$ageyrs)
 
 #Check and drop if any variable is  missing >80% 
-too.missing<-which(apply(preW, 2, function(x) sum(is.na(x))/length(x))>0.8)
+too.missing<-which(apply(preW, 2, function(x) sum(is.na(x))/length(x))>0.5)
 too.missing
 
 preW<-subset(preW, select=-too.missing)
@@ -222,8 +222,8 @@ H2S<-df$h2s
 table(is.na(Wfac))
 
 #Save variable names
-Wvars<-colnames(Wfac)
-Wvars <- Wvars[-c(1:2)] #drop ID variables from adjustment covariates
+Wvars <- colnames(Wfac)
+Wvars <- Wvars[-c(1:2,4:5)] #drop ID variables from adjustment covariates
 survey<-cbind(intdate,Y,id,H2S,Wfac)
 
 

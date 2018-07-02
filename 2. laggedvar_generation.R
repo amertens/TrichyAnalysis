@@ -115,7 +115,7 @@ avetemp<-as.data.frame(avetemp)
 
 #Set to date format for merge
 avetemp$intdate<-as.Date(paste(avetemp$month,avetemp$day,avetemp$year, sep="/"),"%m/%d/%Y")
-avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
+avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
 
 #Quartile temperatures
 avetemp$tempQ1<-cut(avetemp$temp.ave7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
@@ -210,8 +210,8 @@ ave.window<-function(i, winsize, var, data){
 }
 
 averain<-matrix(data=NA,nrow=nrow(rain),ncol=21)
-ave.names<-rep(NA, 21)
-for(i in 1:21){
+ave.names<-rep(NA, 28)
+for(i in 1:28){
   averain[,i]<-ave.window(i, 7, "rain", rain)
   ave.names[i]<- paste0("rain.ave7.lag",i)
 }
@@ -250,15 +250,28 @@ LT <- subset(averain, select=c(intdate, rain.ave7.lag1, rain.ave7.lag7, rain.ave
 #80th percentile of rainfall on rainy days
 HeavyRainThres<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[9])
 
+#70th percentile of rainfall on rainy days
+HeavyRainThres70<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[8])
+
+#90th percentile of rainfall on rainy days
+HeavyRainThres90<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[10])
+
+
 #90th percentile of rainfall on any days
-HeavyRainThres90<-as.numeric(quantile(rain,probs = seq(0, 1, 0.1) ,na.rm=T)[10])
+HeavyRainThres90a<-as.numeric(quantile(rain,probs = seq(0, 1, 0.1) ,na.rm=T)[10])
 
 
 HeavyRain<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres,1,0))
 table(HeavyRain)
 
+HeavyRain70<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres70,1,0))
+table(HeavyRain70)
+
 HeavyRain90<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres90,1,0))
 table(HeavyRain90)
+
+HeavyRain90a<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres90a,1,0))
+table(HeavyRain90a)
 
  
 
@@ -270,9 +283,9 @@ HeavyRain.window<-function(i, winsize, var, data){
 }
 
 
-PriorHeavyRain<-matrix(data=NA,nrow=nrow(rain),ncol=21)
-PriorHeavyRain.names<-rep(NA, 21)
-for(i in 1:21){
+PriorHeavyRain<-matrix(data=NA,nrow=nrow(rain),ncol=28)
+PriorHeavyRain.names<-rep(NA, 28)
+for(i in 1:28){
   PriorHeavyRain[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain)
   PriorHeavyRain.names[i]<- paste0("HeavyRain.lag",i)
 }
@@ -282,18 +295,47 @@ PriorHeavyRain<-as.data.frame(PriorHeavyRain)
 head(PriorHeavyRain,30)
 
 
+#Set to date format for merge
+PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain_sens<-subset(PriorHeavyRain, select=-c(year, month, day)) #Keep all lags for sensitivity analysis
+PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21))
 
-PriorHeavyRain90<-matrix(data=NA,nrow=nrow(rain),ncol=21)
-PriorHeavyRain90.names<-rep(NA, 21)
-for(i in 1:21){
+#Sensitivity rain dataframes
+PriorHeavyRain70<-matrix(data=NA,nrow=nrow(rain),ncol=28)
+PriorHeavyRain70.names<-rep(NA, 28)
+for(i in 1:28){
+  PriorHeavyRain70[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain70)
+  PriorHeavyRain70.names[i]<- paste0("HeavyRain70.lag",i)
+}
+PriorHeavyRain70<-cbind(rain[,1:3],PriorHeavyRain70)
+colnames(PriorHeavyRain70)[4:ncol(PriorHeavyRain70)]<-PriorHeavyRain70.names
+PriorHeavyRain70<-as.data.frame(PriorHeavyRain70)
+PriorHeavyRain70$intdate<-as.Date(paste(PriorHeavyRain70$month,PriorHeavyRain70$day,PriorHeavyRain70$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain70<-subset(PriorHeavyRain70, select=-c(year, month, day))
+                            
+PriorHeavyRain90<-matrix(data=NA,nrow=nrow(rain),ncol=28)
+PriorHeavyRain90.names<-rep(NA, 28)
+for(i in 1:28){
   PriorHeavyRain90[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain90)
   PriorHeavyRain90.names[i]<- paste0("HeavyRain90.lag",i)
 }
 PriorHeavyRain90<-cbind(rain[,1:3],PriorHeavyRain90)
 colnames(PriorHeavyRain90)[4:ncol(PriorHeavyRain90)]<-PriorHeavyRain90.names
 PriorHeavyRain90<-as.data.frame(PriorHeavyRain90)
-head(PriorHeavyRain90,30)
-
+PriorHeavyRain90$intdate<-as.Date(paste(PriorHeavyRain90$month,PriorHeavyRain90$day,PriorHeavyRain90$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain90<-subset(PriorHeavyRain90, select=-c(year, month, day))
+                            
+PriorHeavyRain90a<-matrix(data=NA,nrow=nrow(rain),ncol=28)
+PriorHeavyRain90a.names<-rep(NA, 28)
+for(i in 1:28){
+  PriorHeavyRain90a[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain90a)
+  PriorHeavyRain90a.names[i]<- paste0("HeavyRain90a.lag",i)
+}
+PriorHeavyRain90a<-cbind(rain[,1:3],PriorHeavyRain90a)
+colnames(PriorHeavyRain90a)[4:ncol(PriorHeavyRain90a)]<-PriorHeavyRain90a.names
+PriorHeavyRain90a<-as.data.frame(PriorHeavyRain90a)
+PriorHeavyRain90a$intdate<-as.Date(paste(PriorHeavyRain90a$month,PriorHeavyRain90a$day,PriorHeavyRain90a$year, sep="/"),"%m/%d/%Y")
+PriorHeavyRain90a<-subset(PriorHeavyRain90a, select=-c(year, month, day))
 
 #--------------------------------------
 #Load and merge in survey data
@@ -302,7 +344,7 @@ head(PriorHeavyRain90,30)
 
  load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
 
-#merge survey and weather
+#merge survey and temp
 dim(survey)
 dim(avetemp)
 d<-merge(survey, avetemp, by="intdate", all.x = F, all.y = F) 
@@ -312,26 +354,35 @@ d<-merge(d, maxtemp, by="intdate", all.x = F, all.y = F)
 dim(d)
 colnames(d)
 
-
-#Set to date format for merge
-PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
-PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21))
-
-PriorHeavyRain90$intdate<-as.Date(paste(PriorHeavyRain90$month,PriorHeavyRain90$day,PriorHeavyRain90$year, sep="/"),"%m/%d/%Y")
-PriorHeavyRain90<-subset(PriorHeavyRain90, select=c(intdate, HeavyRain90.lag1, HeavyRain90.lag7,HeavyRain90.lag14,HeavyRain90.lag21))
-
-
-
-#merge suvery and weather
+#merge suvery and rain
 dim(survey)
 dim(PriorHeavyRain)
 d<-merge(d,PriorHeavyRain, by="intdate", all.x = F, all.y = F)  
+d<-merge(d,PriorHeavyRain70, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
+d<-merge(d,PriorHeavyRain90a, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,LT, by="intdate", all.x = T, all.y = F) 
 dim(d)
 
-
 colnames(d)
 
-save(d, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
 
+
+#Make HR sensitivity analysis dataframe
+d_HRsens<-merge(survey, PriorHeavyRain_sens, by="intdate", all.x = F, all.y = F) 
+d_HRsens<-merge(d_HRsens, PriorHeavyRain70, by="intdate", all.x = F, all.y = F)  
+d_HRsens<-merge(d_HRsens, PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
+d_HRsens<-merge(d_HRsens, PriorHeavyRain90a, by="intdate", all.x = F, all.y = F)  
+d_HRsens<-merge(d_HRsens, LT, by="intdate", all.x = T, all.y = F) 
+dim(d_HRsens)
+
+
+save(d, d_HRsens, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
+
+
+
+#Make weather dataset to merge with village H2S measurements
+
+weather <- merge(PriorHeavyRain, avetemp, by="intdate")
+weather <- merge(weather, LT, by="intdate")
+save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/prior_weather_dataset.Rdata")
