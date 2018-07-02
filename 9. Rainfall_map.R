@@ -27,6 +27,9 @@ gps <- gps %>% group_by(vilname) %>% summarise(lat=median(north, na.rm=T), long=
 gps$group<-1
 head(gps)
 
+#Grab single gps point per village to check elevation
+gps %>% group_by(vilname) %>% slice(1) %>% as.data.frame()
+
 #Add in airport
 airport <- data.frame(vilname="airport",lat=10.7605952,	long=78.7088753, group=1, season="January - June")
 
