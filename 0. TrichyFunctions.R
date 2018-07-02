@@ -174,7 +174,7 @@ gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
   df <-df[!is.na(df$A),]
   nlevels <- length(unique(df$A))
   
-  m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family="binomial")
+  m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
  
   res<-summary(m$gam)
   #print(res)
@@ -190,9 +190,60 @@ gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
   return(resdf)
 }
 
-trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL){
+
+#Make GAMM analysis function
+gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wvars){
+ 
+  df <-data %>% subset(., select=c("Y","stdywk", "individ", "vilid",Avar, weathervar, Wvars))
+  colnames(df)[colnames(df)==Avar] <- "A"
+  colnames(df)[colnames(df)==weathervar] <- "Weather"
+
+  df <-df[!is.na(df$A),]
+  nlevels <- length(unique(df$A))
+  
+  #Wall<-subset(df, select=c("Weather", Wvars[-c(1:34,75:86)]))
+  Wall<-subset(df, select=c("Weather", Wvars))
+  Wall<-droplevels(Wall)
+
+  Wscreen <- washb_prescreen(Y=df$Y,Ws=Wall,family="binomial", pval = 0.2 ,print=T)
+  
+
+  d.W<-subset(Wall, select=Wscreen)
+  # d.W<-design_matrix(d.W)
+  # #remove near zero variance columns
+  # preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
+  # d.W = predict(preproc, d.W)
+  # d.W<-droplevels(d.W)
+  
+ Ws <- colnames(d.W)
+ dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
+
+  
+  frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
+  m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
+  res <- summary(m$gam)
+  
+  
+  #print(res)
+  resdf <- data.frame(outcome=rep(Yvar,nlevels-1), exposure=rep(Avar,nlevels-1), 
+                      PR=exp(res$p.coeff)[2:nlevels], 
+                      ci.lb=exp(res$p.coeff[2:nlevels] - res$se[2:nlevels] * 1.96), 
+                      ci.ub=exp(res$p.coeff[2:nlevels] + res$se[2:nlevels] * 1.96))
   if(is.null(strat)){
-    res<-gammAR1(data=d, Avar=A, Yvar=Y, strat=NULL)
+    resdf$strat="Unstratified"
+  }else{
+    resdf$strat=strat
+  }
+  return(resdf)
+}
+
+trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL, Wvars=NULL, weathervar=NULL){
+  if(is.null(strat)){
+    if(is.null(Wvars)){
+      res<-gammAR1(data=d, Avar=A, Yvar=Y, strat=NULL)
+    }else{
+      res<-gammAR1_adj(data=d, Avar=A, Yvar=Y, strat=NULL, weathervar=weathervar, Wvars=Wvars)
+    }
   }else{
     V= d[,strat]
     d<-d[!is.na(V),]
@@ -200,12 +251,49 @@ trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL){
     res<-NULL
     for(i in 1:length(unique(V))){
       dsub= d[V==levels(V)[i],]
-      res_strat <- gammAR1(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i])
+          if(is.null(Wvars)){
+            res_strat <- gammAR1(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i])
+          }else{
+            res_strat<-gammAR1_adj(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i], weathervar=weathervar, Wvars=Wvars)
+          }
+      
       res<-rbind(res, res_strat)
     }
     
   }
+  if(is.null(Wvars)){
+    res$adjusted="N" 
+  }else{
+    res$adjusted="Y" 
+  }
   return(res)
+}
+
+
+
+
+
+screen.lasso <- function(Y, X, family, alpha = 1, minscreen = 2, nfolds = 5, nlambda = 20){
+    require("glmnet")
+
+      if (!is.matrix(X)) {
+        X <- model.matrix(~-1 + ., X)
+    }
+  
+    fitCV <- glmnet::cv.glmnet(x = X, y = Y, lambda = NULL, type.measure = "deviance", 
+        nfolds = nfolds, family = "binomial", alpha = alpha, 
+        nlambda = nlambda)
+    whichVariable <- (as.numeric(coef(fitCV$glmnet.fit, s = fitCV$lambda.min))[-1] != 
+        0)
+    if (sum(whichVariable) < minscreen) {
+        warning("fewer than minscreen variables passed the glmnet screen, increased lambda to allow minscreen variables")
+        sumCoef <- apply(as.matrix(fitCV$glmnet.fit$beta), 2, 
+            function(x) sum((x != 0)))
+        newCut <- which.max(sumCoef >= minscreen)
+        whichVariable <- (as.matrix(fitCV$glmnet.fit$beta)[, 
+            newCut] != 0)
+    }
+    return(X[,whichVariable])
 }
 
 
@@ -220,32 +308,51 @@ scaleFUN <- function(x) sprintf("%.2f", x)
 
 
 
-
-RR_plotfun <- function(df, xlab="Quartile contrast", title="", yticks=c(0.125,0.25,0.5,1,2,4,8), cols= tempcol){
-  
-  p<-ggplot(df, aes(x=strata)) + 
-    geom_point(aes(y=PR, fill=strata, color=strata), size = 4) +
-    geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strata),
-                   alpha=0.5, size = 3) +
-    labs(x = xlab, y = "Prevalence Ratio") +
-    geom_hline(yintercept = 1) +
-    coord_cartesian(ylim=range(yticks)) +
-    scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
-    scale_fill_manual(values=rep(cols,4)) +
-    scale_colour_manual(values=rep(cols,4)) +
-    theme(strip.background = element_blank(),
-      legend.position="none",
-      strip.text.x = element_text(size=12),
-      axis.text.x = element_text(size=12)) +
-    facet_wrap(~lag,  scales = "fixed") +
-    ggtitle(title)
-  
-  return(p)
-}
-
-
-
-
+# 
+# RR_plotfun <- function(df, xlab="Quartile contrast", title="", yticks=c(0.125,0.25,0.5,1,2,4,8), cols= tempcol){
+#   
+#   p<-ggplot(df, aes(x=strata)) + 
+#     geom_point(aes(y=PR, fill=strata, color=strata), size = 4) +
+#     geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strata),
+#                    alpha=0.5, size = 3) +
+#     labs(x = xlab, y = "Prevalence Ratio") +
+#     geom_hline(yintercept = 1) +
+#     coord_cartesian(ylim=range(yticks)) +
+#     scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
+#     scale_fill_manual(values=rep(cols,4)) +
+#     scale_colour_manual(values=rep(cols,4)) +
+#     theme(strip.background = element_blank(),
+#       legend.position="none",
+#       strip.text.x = element_text(size=12),
+#       axis.text.x = element_text(size=12)) +
+#     facet_wrap(~lag,  scales = "fixed") +
+#     ggtitle(title)
+#   
+#   return(p)
+# }
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# #------------------------------
+# # Function to combine plots 
+# # into one figure
+# #------------------------------
+# 
+# trichy_panel_plot <- function(raind=raindf, H2Sd=H2Sdf, tempd=tempdf){
+#   
+# prain <- RR_plotfun(df=raind, xlab="Long-term rainfall strata", title="Heavy rainfall - diarrhea association",cols= raincol)
+# pH2S <- RR_plotfun(df=H2Sd, xlab="Long-term rainfall strata", title="Heavy rainfall - drinking water H2S association", cols= raincol)
+# ptemp <- RR_plotfun(df=tempd, xlab="Quartile contrast", title="Temperature - diarrhea association", cols= tempcol)
+#   
+#   p <- plot_grid(ptemp, prain, pH2S, labels = c("A", "B","C"), ncol = 1)
+#   p
+#   
+#  return(p) 
+# }
 
 
 
@@ -253,19 +360,121 @@ RR_plotfun <- function(df, xlab="Quartile contrast", title="", yticks=c(0.125,0.
 # Function to combine plots 
 # into one figure
 #------------------------------
+PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8)){
 
-trichy_panel_plot <- function(raind=raindf, H2Sd=H2Sdf, tempd=tempdf){
+  df$strat <- factor(df$strat, levels=unique(df$strat))
+  df$lag <- factor(df$lag, levels=unique(df$lag))
+
+  p<-ggplot(df, aes(x=strat)) + 
+      geom_point(aes(y=PR, fill=strat, color=strat), size = 4) +
+      geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
+                     alpha=0.5, size = 3) +
+      labs(x = xlab, y = "Prevalence Ratio") +
+      geom_hline(yintercept = 1) +
+      coord_cartesian(ylim=range(yticks)) +
+      scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
+      scale_fill_manual(name = "strat", values=cols) +
+      scale_colour_manual(name = "strat",values=cols) +
+      theme(strip.background = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=12),
+        axis.text.x = element_text(size=12, angle = 45, hjust = 1)) +
+      facet_wrap(~lag,  scales = "fixed") +
+      ggtitle(title)
+  return(p)
+}
+
+
+trichy_panel_plot <- function(d){
   
-prain <- RR_plotfun(df=raind, xlab="Long-term rainfall strata", title="Heavy rainfall - diarrhea association",cols= raincol)
-pH2S <- RR_plotfun(df=H2Sd, xlab="Long-term rainfall strata", title="Heavy rainfall - drinking water H2S association", cols= raincol)
-ptemp <- RR_plotfun(df=tempd, xlab="Quartile contrast", title="Temperature - diarrhea association", cols= tempcol)
-  
-  p <- plot_grid(ptemp, prain, pH2S, labels = c("A", "B","C"), ncol = 1)
-  p
+    #plot parameters
+    theme_set(theme_bw())
+    cols=c("(ref.)"="#000000",
+           "Unstratified"="#000000",
+           "1v2"="#ED8021", 
+           "1v3"="#E15324", 
+           "1v4"="#D62728", 
+           "Low"="#56B4E9", 
+           "Medium"="#4C8FE5", 
+           "High"="#426AE3")
+           
+    
+    #Clean data frames 
+     d$Xvar <- d$exposure
+     d$lag <- str_split_fixed(d$exposure, "Q|lag",2)[,2]
+     d$exposure <- str_split_fixed(d$exposure, "Q|lag",2)[,1]
+    
+    d$quartile<-str_sub( str_split_fixed(rownames(d), "Q",2)[,2],1,1)
+    d$strat[d$strat=="Unstratified" & d$quartile!=""] <- d$quartile[d$strat=="Unstratified" & d$quartile!=""]
+    
+    #Add blank rows for reference levels
+    if(any(grepl("temp",d$exposure))){
+      temp_blank <- d[1:3,]
+      temp_blank$quartile <- 1
+      temp_blank$strat <- "(ref.)"
+      temp_blank$lag <- c("7","14","21") 
+      temp_blank$PR <- 1
+      temp_blank$ci.lb <- temp_blank$ci.ub <-temp_blank$Xvar <- NA
+      d <- rbind(temp_blank,d)
+    }
+    
+      #Clean up labels
+    d$lag[d$lag=="7"] <- "One week lag"
+    d$lag[d$lag=="14"] <- "Two week lag"
+    d$lag[d$lag=="21"] <- "Three week lag"
+    
+    d$strat[d$strat=="2"] <- "1v2"
+    d$strat[d$strat=="3"] <- "1v3"
+    d$strat[d$strat=="4"] <- "1v4"
+    
+    d$strat[d$strat=="T1"] <- "Low"
+    d$strat[d$strat=="T2"] <- "Medium"
+    d$strat[d$strat=="T3"] <- "High"
+    
+    d$strat[d$strat=="temp"] <- "Temperature"
+    d$strat[d$strat=="HeavyRain."] <- "Heavy Rain"
+    
+    
+    #Split into plot dataframes
+    d1<-d[grepl("temp",d$exposure) & grepl("Diarrhea",d$outcome) ,]
+    d2<-d[grepl("HeavyRain",d$exposure) & grepl("Diarrhea",d$outcome) ,]
+    d3<-d[grepl("temp",d$exposure) & grepl("H2S",d$outcome) ,]
+    d4<-d[grepl("HeavyRain",d$exposure) & grepl("H2S",d$outcome) ,]  
+      
+    ptemp <- prain <- ptempH2s <- pH2S <- NULL
+      if(nrow(d1)>0){
+        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title="Temperature - diarrhea association")
+      }
+    
+      if(nrow(d2)>0){
+        prain <- PR_plotfun(df=d2, xlab="Long-term rainfall strata", title="Heavy rainfall - diarrhea association")
+      }
+    
+      if(nrow(d3)>0){
+        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title="Temperature - drinking water H2S association")
+      }
+    
+      if(nrow(d4)>0){
+        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title="Heavy rainfall - drinking water H2S association")
+      }
+    
+    plist <- list(ptemp, prain, ptempH2s,pH2S)
+    names(plist) <- seq_along(plist)
+    plist[sapply(plist, is.null)] <- NULL
+    
+    nplots <- length(plist)
+    if(nplots==1){
+      p <- plist[[1]]
+    }
+    if(nplots==2){
+      p <- plot_grid(plist[[1]], plist[[2]],  labels = c("A", "B"), ncol = 1)
+    }
+    if(nplots==3){
+      p <- plot_grid(plist[[1]], plist[[2]], plist[[3]], labels = c("A", "B","C"), ncol = 1)
+    }
   
  return(p) 
 }
-
 
 
 
@@ -341,4 +550,17 @@ plotdf_format <- function(
 }
   
 
+
+
+#Print tables to two decimals places
+
+tab_format <- function(d){
+  d$PR <- sprintf("%1.2f", d$PR)
+    d$ci.lb <- sprintf("%1.2f", d$ci.lb)
+  d$ci.ub <- sprintf("%1.2f", d$ci.ub)
+  
+  d$tab_format= paste0(d$PR," (", d$ci.lb,", ",d$ci.ub,")")
+
+  return(d)
+}
 
