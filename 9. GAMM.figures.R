@@ -87,17 +87,24 @@ trichy_multiplot <- function(d, titlelab=""){
       temp_blank <- d[1:3,]
       temp_blank$quartile <- 1
       temp_blank$strat <- "(ref.)"
-      temp_blank$lag <- c("7","14","21")
+          if(d$outcome!="H2S"){temp_blank$lag <- c("7","14","21")}else{
+            temp_blank$lag <- c("1","7","14")
+          }
       temp_blank$PR <- 1
       temp_blank$ci.lb <- temp_blank$ci.ub <-temp_blank$Xvar <- NA
       d <- rbind(temp_blank,d)
     }
 
       #Clean up labels
+    if(d$outcome!="H2S"){
     d$lag[d$lag=="7"] <- "One week lag"
     d$lag[d$lag=="14"] <- "Two week lag"
     d$lag[d$lag=="21"] <- "Three week lag"
-
+    }else{
+    d$lag[d$lag=="1"] <- "One week lag"
+    d$lag[d$lag=="7"] <- "Two week lag"
+    d$lag[d$lag=="14"] <- "Three week lag"
+    }
     d$strat[d$strat=="2"] <- "1v2"
     d$strat[d$strat=="3"] <- "1v3"
     d$strat[d$strat=="4"] <- "1v4"
@@ -126,11 +133,11 @@ trichy_multiplot <- function(d, titlelab=""){
       }
 
       if(nrow(d3)>0){
-        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title=paste0("Temperature - drinking water H2S association",titlelab))
+        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title=paste0("Temperature - drinking water H2S association",titlelab), yticks=c(0.5,0.66, 1,1.5, 2))
       }
 
       if(nrow(d4)>0){
-        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - drinking water H2S association",titlelab))
+        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - drinking water H2S association",titlelab), yticks=c(0.5,0.66,1,1.5,2))
       }
 
     plist <- list(ptemp, prain, ptempH2s,pH2S)
@@ -305,6 +312,10 @@ titlelab = ", \nstratified by intervention arm"
 
 
 
+ggsave(p , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure3.pdf",width=10.4,height=8.32)    
+    
+ggsave(pH2S , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure4.pdf",width=10.4,height=8.32)      
+
 
   
 pdf(file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Trichy_GAMM_figures.pdf")
@@ -312,7 +323,7 @@ pdf(file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Trichy_GAMM_
   p
   p_adj
   pH2S
-  pH2S_adj
+  #pH2S_adj
   p_int
   p_minmax
   p90

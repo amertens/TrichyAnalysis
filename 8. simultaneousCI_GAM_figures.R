@@ -81,9 +81,12 @@ d.temp$lwrS<-d.temp$lwrS*100
 
 #merge in quartile info
 d.temp$quartiles<-rep(NA, nrow(d.temp))
-d.temp$quartiles[d.temp$lag=="One week lag"]<-temp_quartiles[,1] 
-d.temp$quartiles[d.temp$lag=="Two week lag"]<-temp_quartiles[,2] 
-d.temp$quartiles[d.temp$lag=="Three week lag"]<-temp_quartiles[,3] 
+# d.temp$quartiles[d.temp$lag=="One week lag"]<-temp_quartiles[,1] 
+# d.temp$quartiles[d.temp$lag=="Two week lag"]<-temp_quartiles[,2] 
+# d.temp$quartiles[d.temp$lag=="Three week lag"]<-temp_quartiles[,3] 
+d.temp$quartiles[d.temp$lag=="One week lag"]<- c(26.1, 28.1, 30.5)
+d.temp$quartiles[d.temp$lag=="Two week lag"]<- c(26.1, 28.1, 30.5) 
+d.temp$quartiles[d.temp$lag=="Three week lag"]<- c(26.1, 28.1, 30.5)
 
 temp<-ggplot(d.temp, aes(x = newd)) +
     geom_line(aes(y=fit), color="#D55E00") +

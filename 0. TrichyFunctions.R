@@ -174,7 +174,9 @@ gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
   df <-df[!is.na(df$A),]
   nlevels <- length(unique(df$A))
   
-  m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
+  m<-NULL
+  try(m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
+  if(is.null(m)){m <- gamm(Y ~ A , data=df, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))}
  
   res<-summary(m$gam)
   #print(res)
@@ -220,7 +222,11 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
 
   
   frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
-  m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
+  
+  m<-NULL
+  try(m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
+  if(is.null(m)){m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log'))}
+  
   res <- summary(m$gam)
   
   
