@@ -40,7 +40,7 @@ preW<-read.dta("trichy_long.dta") %>%
                   "pceduc","pclit","momage","momwork", # education
                   "rooms","totp","sc","kitchen","kitchvent", #house
                   "hwflies","hwwater","hwsoap","hwash","hwtow","hwsink", #handwashing station
-                  #"hwcntwat","hwcntsoap", Don't include count of HW behavior. Great missingness, and redundant with HW indicators
+                  "hwcntwat","hwcntsoap", #Don't include count of HW behavior. Great missingness, and redundant with HW indicators
                   "hw1","hw2","hw3","hw4","hw5","hw6","hw7","hw8","hw9","hw10","hw11","hw12", #handwash w/ water
                   "hws1","hws2","hws3","hws4","hws5","hws6","hws7","hws8","hws9","hws10","hws11","hws12", #handwash w/soap
                   "boil_freq","boil_ready","boil_min","boil_present","wqsource","wqcol","wstore","wboil", #watertreat
@@ -81,7 +81,7 @@ prop.table(table(tab1$primwat))
 fivenum(tab1$age)
 fivenum(tab1$ageyrs)
 
-#Check and drop if any variable is  missing >80% 
+#Check and drop if any variable is  missing >50% 
 too.missing<-which(apply(preW, 2, function(x) sum(is.na(x))/length(x))>0.5)
 too.missing
 
@@ -167,6 +167,9 @@ to.replace<-preW$wqsource==levels(preW$wqsource)[1]|preW$wqsource==levels(preW$w
 preW[to.replace,"wqsource"]<-levels(preW$wqsource)[8]
 table(preW$wqsource)
 
+table(preW$kitchvent)
+
+
 #drop empty levels
 preW<-droplevels(preW)
 
@@ -177,8 +180,9 @@ preW<-droplevels(preW)
 #Check if variables are missing any variation
 apply(preW, 2, function(x) length(table(x)))
 
+#remove vars with zerovariance
 dim(preW)
-  preproc = caret::preProcess(preW, method = c("zv"))
+  preproc = caret::preProcess(preW, method = c("nzv"))
   preW = predict(preproc, preW)
 dim(preW)
 
@@ -226,6 +230,15 @@ Wvars <- colnames(Wfac)
 Wvars <- Wvars[-c(1:2,4:5)] #drop ID variables from adjustment covariates
 survey<-cbind(intdate,Y,id,H2S,Wfac)
 
+#check Wvars
+for(i in 1:ncol(Wfac)){
+  cat(colnames(Wfac)[i], ": ",class(Wfac[,i]),"\n")
+  if(class(Wfac[,i])=="numeric"){
+    print(summary(Wfac[,i]))
+  }else{
+    print(table(Wfac[,i]))
+  }
+}
 
 
 save(df,names.svy,names.W,

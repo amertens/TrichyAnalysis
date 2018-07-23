@@ -1,4 +1,5 @@
 
+
 rm(list=ls())
 library(tidyverse)
 library(colourpicker)
@@ -28,7 +29,7 @@ PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8)){
   df$lag <- factor(df$lag, levels=unique(df$lag))
 
   p<-ggplot(df, aes(x=strat)) +
-      geom_point(aes(y=PR, fill=strat, color=strat), size = 4) +
+      geom_point(aes(y=PR, fill=strat, color=strat), size = 1) +
       geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
                      alpha=0.5, size = 3) +
       labs(x = xlab, y = "Prevalence Ratio") +
@@ -40,7 +41,8 @@ PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8)){
       theme(strip.background = element_blank(),
         legend.position="none",
         strip.text.x = element_text(size=12),
-        axis.text.x = element_text(size=12, angle = 45, hjust = 1)) +
+        axis.text.x = element_text(size=12, angle = 45, hjust = 1),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
       facet_wrap(~lag,  scales = "fixed") +
       ggtitle(title)
   return(p)
@@ -52,7 +54,7 @@ PR_plotfun_strat <- function(df, xlab="",title="", yticks=c(0.0625,0.125,0.25,0.
   df$lag <- factor(df$lag, levels=unique(df$lag))
 
   p<-ggplot(df, aes(x=strat)) +
-      geom_point(aes(y=PR, fill=strat, color=strat), size = 4) +
+      geom_point(aes(y=PR, fill=strat, color=strat), size = 1) +
       geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
                      alpha=0.5, size = 3) +
       labs(x = xlab, y = "Prevalence Ratio") +
@@ -64,7 +66,8 @@ PR_plotfun_strat <- function(df, xlab="",title="", yticks=c(0.0625,0.125,0.25,0.
       theme(strip.background = element_blank(),
         legend.position="none",
         strip.text.x = element_text(size=12),
-        axis.text.x = element_text(size=12, angle = 45, hjust = 1)) +
+        axis.text.x = element_text(size=12, angle = 45, hjust = 1),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
       facet_wrap(lag~int,  scales = "fixed", nrow = 1) +
       ggtitle(title)
   return(p)
@@ -125,21 +128,20 @@ trichy_multiplot <- function(d, titlelab=""){
 
     ptemp <- prain <- ptempH2s <- pH2S <- NULL
       if(nrow(d1)>0){
-        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Temperature - diarrhea association",titlelab))
+        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Prevalence ratios of diarrhea across quartiles of weekly mean temperature",titlelab))
       }
 
       if(nrow(d2)>0){
-        prain <- PR_plotfun(df=d2, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - diarrhea association",titlelab))
+        prain <- PR_plotfun(df=d2, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - diarrhea association, unstratified and stratified by long-term rain trends",titlelab))
       }
 
       if(nrow(d3)>0){
-        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title=paste0("Temperature - drinking water H2S association",titlelab), yticks=c(0.5,0.66, 1,1.5, 2))
+        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title=expression('Prevalence ratios of drinking water H'[2]*'S across quartiles of weekly mean temperature')) #, yticks=c(0.5,0.66, 1,1.5, 2))
       }
 
       if(nrow(d4)>0){
-        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - drinking water H2S association",titlelab), yticks=c(0.5,0.66,1,1.5,2))
+        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title=expression('Heavy rainfall - drinking water H'[2]*'S association, unstratified and stratified by long-term rain trends')) #, yticks=c(0.5,0.66,1,1.5,2))
       }
-
     plist <- list(ptemp, prain, ptempH2s,pH2S)
     names(plist) <- seq_along(plist)
     plist[sapply(plist, is.null)] <- NULL
@@ -155,7 +157,7 @@ trichy_multiplot <- function(d, titlelab=""){
       p <- plot_grid(plist[[1]], plist[[2]], plist[[3]], labels = c("A", "B","C"), ncol = 1)
     }
 
- return(p)
+ return(list(plot=p, facets=plist))
 }
 
 
@@ -197,17 +199,28 @@ res_HR90 <- rbind(HR1_90, HR2_90, HR3_90, HR1_strat_90, HR2_strat_90, HR3_strat_
 
 
 
+#primary plots
+p <- trichy_multiplot(res_prim, titlelab = "")
+p$plot
 
-p <- trichy_multiplot(res_prim, titlelab = ", unadjusted")
-#p
- 
 
+pH2S <- trichy_multiplot(res_H2S, titlelab = "")
+pH2S$plot
+
+
+
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
+save(p, pH2S, file ="gamm_plot_facets.Rdata")
+
+ggsave(p$plot , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure3_alt.pdf",width=10.4,height=8.32)    
+ggsave(pH2S$plot , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure4.pdf",width=10.4,height=8.32)      
+
+
+
+#secondary plots
 p_adj <- trichy_multiplot(res_prim_adj, titlelab = ", adjusted")
 #p_adj
- 
 
-pH2S <- trichy_multiplot(res_H2S, titlelab = ", unadjusted")
-#pH2s
 
 pH2S_adj <- trichy_multiplot(res_H2S_adj, titlelab = ", adjusted")
 
@@ -309,12 +322,6 @@ titlelab = ", \nstratified by intervention arm"
     plist[sapply(plist, is.null)] <- NULL
 
     p_int <- plot_grid(plist[[1]], plist[[2]],  labels = c("A", "B"), ncol = 1)
-
-
-
-ggsave(p , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure3.pdf",width=10.4,height=8.32)    
-    
-ggsave(pH2S , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure4.pdf",width=10.4,height=8.32)      
 
 
   

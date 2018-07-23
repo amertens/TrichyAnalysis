@@ -1,7 +1,8 @@
 rm(list=ls())
 library("ggplot2")
 library("ggthemes")
-theme_set(theme_bw(base_size = 8))
+#theme_set(theme_bw(base_size = 8))
+theme_set(theme_bw())
 
 
 #Set jitter height
@@ -95,10 +96,13 @@ temp<-ggplot(d.temp, aes(x = newd)) +
     geom_vline(aes(xintercept=quartiles, color = "#D55E00"), alpha = 1, linetype = 2) +
     facet_grid( ~ lag) +
     labs(y = "Diarrhea prevalence (%)",
-         x = "Weekly daytime average (C)",
-         title = "(A) Temperature") +
-    theme(strip.background = element_blank(),
-          legend.position="none")
+         x = "Weekly mean temperature (C)",
+         title = "Cubic splines between weekly mean temperature and diarrhea") +
+      theme(strip.background = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=12),
+        axis.text.x = element_text(size=12),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 
 
@@ -121,12 +125,21 @@ rain<-ggplot(d.rain, aes(x = newd)) +
     geom_jitter(aes(y=Y*6,x=X), height = h, width=0.2,  alpha = 0.1, size=0.5)+
     facet_grid( ~ lag) +
     labs(y = "Diarrhea prevalence (%)",
-         x = "Weekly 24 hour accumulation average (log mm)",
-         title = "(B) Rainfall") +
-    theme(strip.background = element_blank())
+         x = "Weekly mean 24 hour accumulation (log mm)",
+         title = "Cubic splines between weekly mean rainfall and diarrhea") +
+      theme(strip.background = element_blank(),
+        legend.position="none",
+        strip.text.x = element_text(size=12),
+        axis.text.x = element_text(size=12),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 
 
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
+
+save(temp, rain, file ="spline_plot_facets.Rdata")
+
+
 #pdf("GAMcurves.pdf",width=10,height=8)
 pdf("GAMcurves5.2.pdf",width=5.2,height=4.16)
 

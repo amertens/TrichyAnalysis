@@ -34,7 +34,7 @@ d %>% group_by(individ, round, stdywk) %>% summarise(n=n()) %>% ungroup() %>% su
 
 
 #Make unique studyweek so AR1 works
-d <- d %>%  mutate(stdywk2 = stdywk) %>% arrange(individ, stdywk) %>% group_by(individ, stdywk) %>%
+d <- d %>%  mutate(stdywk2 = stdywk) %>% arrange(individ, stdywk, age) %>% group_by(individ, stdywk) %>%
   mutate(stdywk2 = stdywk2 + (row_number()-1)) %>% ungroup() %>% mutate(stdywk=stdywk2) %>%
   subset(., select=-c(stdywk2)) %>% as.data.frame()
 
@@ -118,6 +118,7 @@ HR2_strat_adj
 
 HR3_strat_adj<-trichy_gamm(d, A="HeavyRain.lag21", strat="LT22_T", weathervar="temp.ave7.lag21", Wvars = Wvars)
 HR3_strat_adj
+
 
 
 
@@ -364,8 +365,12 @@ res_HR90 <- rbind(HR1_90, HR2_90, HR3_90, HR1_strat_90, HR2_strat_90, HR3_strat_
 
 
 save(res_prim, res_prim_adj, res_H2S, res_H2S_adj,
-     res_minmax_temp, res_wpi_strat, res_HR90,
      file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_plot_dfs.Rdata")
+
+
+save(res_minmax_temp, res_wpi_strat, res_HR90,
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_sensitivity_dfs.Rdata")
+
 
 # res_H2S2 <- res_H2S
 # res_H2S_adj2 <- res_H2S_adj

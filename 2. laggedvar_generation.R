@@ -386,3 +386,14 @@ save(d, d_HRsens, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis
 weather <- merge(PriorHeavyRain, avetemp, by="intdate")
 weather <- merge(weather, LT, by="intdate")
 save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/prior_weather_dataset.Rdata")
+
+
+
+#Get descriptive statistics of the mean weather by quartile for the supplimentary tables
+d %>% group_by(tempQ7) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag7),2))
+d %>% group_by(tempQ14) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag14),2))
+d %>% group_by(tempQ21) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag21),2))
+
+d %>% group_by(tempQ1) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag1),2))
+d %>% group_by(tempQ7) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag7),2))
+d %>% group_by(tempQ14) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag14),2))
