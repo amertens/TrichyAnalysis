@@ -10,14 +10,7 @@ library(SuperLearner)
     try(detach(package:mgcv))
     library(gam)
 
-Y=d$Y
-Age=log(d$rain.ave7.lag7+.1)
-id=d$id
-gamdf = c(1:10)
-SL.library = c( "SL.gam")
-imputeX=F
-W=NULL
-cvControl = list()
+
 
 rmvn <- function(n, mu, sig) { ## MVN random deviates
     L <- mroot(sig)
@@ -64,6 +57,8 @@ GAM_simulCI<-function (Y, Age, W = NULL, id = NULL, SL.library = c( "SL.gam"), c
             cvControl = cvControl, df = gamdf)
         SL.library <- cvGAM$SL.library
     }
+    
+    print(cvGAM$df_opt)
 
     try(detach(package:gam))
     require(mgcv)
@@ -72,10 +67,13 @@ GAM_simulCI<-function (Y, Age, W = NULL, id = NULL, SL.library = c( "SL.gam"), c
 
       
 Vb <- vcov(m)
+#https://stats.stackexchange.com/questions/110091/how-to-calculate-the-robust-standard-error-of-predicted-y-from-a-linear-regressi
+#Vb <- sandwichSE(fitd, m, fitd$id)
 newd <- seq(min(Age), max(Age), length = nrow(fitd))
 pred <- predict(m, data.frame(Age = newd),  se.fit = TRUE)
 se.fit <- pred$se.fit
 
+sandwichSE(fitd, m, fitd$id)
 
 set.seed(123456)
 N <- 10000
@@ -96,7 +94,7 @@ pred <- transform(cbind(data.frame(pred), newd),
                   uprS = fit + (crit * se.fit),
                   lwrS = fit - (crit * se.fit))  
         
-pred<-data.frame(Y=fitd$Y, X=fitd$Age, pred, Pval=rep(pval, nrow(fitd)))  
+pred<-data.frame(Y=fitd$Y, X=fitd$Age, pred, Pval=rep(pval, nrow(fitd)), degrees.freedom=cvGAM$df_opt)  
 
 
     return(pred)    
@@ -108,9 +106,12 @@ pred<-data.frame(Y=fitd$Y, X=fitd$Age, pred, Pval=rep(pval, nrow(fitd)))
 #GAM temperature and rainfall fits
 ######################################
 
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
-load("temp.datasets.Rdata")
+# setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
+# load("temp.datasets.Rdata")
 
+try(setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data"))
+
+load("analysis_datasets.Rdata")
 head(d)
 
 
@@ -124,23 +125,22 @@ save(fit.temp7.unadj,fit.temp14.unadj,fit.temp21.unadj, file="temp.unadjusted.GA
 
 
 
-
-load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.datasets.Rdata")
-head(d)
+# 
+# load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.datasets.Rdata")
+# head(d)
 set.seed(12345)
- fit.rain7.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag7+.1),id=d$id, imputeX=T, gamdf = c(1:10))
- fit.rain14.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag14+.1),id=d$id, imputeX=T, gamdf = c(1:10))
- fit.rain21.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag21+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain7.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag8+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain14.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag15+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain21.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag22+.1),id=d$id, imputeX=T, gamdf = c(1:10))
 save(fit.rain7.unadj,fit.rain14.unadj,fit.rain21.unadj, file="rain.unadjusted.GAMfits.Rdata")
 
 
-
-set.seed(12345)
- fit.h2s7.unadj <- GAM_simulCI(Y=d$h2s,Age=log(d$rain.ave7.lag7+.1),id=d$id, imputeX=T, gamdf = c(2:3))
- fit.h2s14.unadj <- GAM_simulCI(Y=d$h2s,Age=log(d$rain.ave7.lag14+.1),id=d$id, imputeX=T, gamdf = c(2:3))
- fit.h2s21.unadj <- GAM_simulCI(Y=d$h2s,Age=log(d$rain.ave7.lag21+.1),id=d$id, imputeX=T, gamdf = c(2:3))
-save(fit.h2s7.unadj,fit.h2s14.unadj,fit.h2s21.unadj, file="h2s.unadjusted.GAMfits.Rdata")
-
+fit.temp7.unadj$degrees.freedom[1]
+fit.temp14.unadj$degrees.freedom[1]
+fit.temp21.unadj$degrees.freedom[1]
+fit.rain7.unadj$degrees.freedom[1]
+fit.rain14.unadj$degrees.freedom[1]
+fit.rain21.unadj$degrees.freedom[1]
 
 
 

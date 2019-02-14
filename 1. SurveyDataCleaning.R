@@ -5,7 +5,7 @@
 rm(list=ls())
 
 library(tidyverse)
-library(foreign)
+library(haven)
 library(washb)
 library(caret)
 
@@ -13,7 +13,7 @@ library(caret)
 ###Cleaning survey data
 #read in data and subset to relevant variables (excluding covariates to prescreen)
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Data")
-svy<-read.dta("trichy_long.dta") %>%
+svy<-read_dta("trichy_long.dta") %>%
   subset(select=c("vilid","hhid","individ","wpi","round","intdate","stdywk","bdate","mdiar7d", "diar2d", "diar7d", "diar14d","hcgi7d","diardays","h2s")) %>%
   filter(!is.na(diar7d))
 
@@ -30,12 +30,12 @@ table(svy$hcgi7d)
 table(svy$diardays)
 
 
-preW<-read.dta("trichy_long.dta") %>%
+preW<-read_dta("trichy_long.dta") %>%
   filter(!is.na(diar7d)) %>%
   subset(select=c("vilid",
                   "round","age","sex", 
                   "bfcur","sanOD","sanlat","primwat",
-                  "soil","thatch","radio","tv","cell","bank","moto","bike","mosq","stove","fuel1","fuel2", #assets
+                  "soil","thatch","radio","tv","cell","bank","moto","bike","mosq","stove","fuel1", #assets
                   "anygrp","shgw","agri","elec","land","ownhome",
                   "pceduc","pclit","momage","momwork", # education
                   "rooms","totp","sc","kitchen","kitchvent", #house
@@ -48,38 +48,21 @@ preW<-read.dta("trichy_long.dta") %>%
                          #(don't include, because on causal pathway between weather and diar)
                   "latage","latfinance","latused","lathole","latwat","latsoap","latflies","latfec", #latrine quality
                   "an_buff","an_cow","an_ox","an_calf","an_goat","an_chick", #household animals
-                  "an_dogcat","stockliv","goatliv","chickliv","dogcatliv", #household animals
+                  "an_dogcat","stockliv","goatliv","chickliv","dogcatliv" #household animals
                   #"fecesliv","fecessm", #visible fecal contamination; don't include because may vary with rainfall/muddiness
                   #"chobs_hand","chobs_nails","chobs_face","chobs_cloth","chobs_nocloth","chobs_shoes", #Don't include because may vary with rainfall/muddiness
-                  "qF1")) #asset composite index
+                  #"qF1" #asset composite index
+                  ))
 
-#Calculate village level open defication
+#Calculate village level open defecation
 villOD <- preW %>% group_by(vilid) %>% summarize(villOD=mean(sanOD)) %>% as.data.frame()
 summary(villOD$villOD)
 preW <- left_join(preW, villOD, by="vilid")
 preW <- preW %>% subset(., select = -c(vilid))
 
-#table 1 summary
-tab1 <- read.dta("trichy_long.dta") %>% filter(round==0) %>% 
-    filter(!is.na(diar7d))%>% 
-  mutate(animals_owned=an_buff+an_cow+an_ox+an_calf+an_goat+an_chick+an_dogcat) %>%
-  subset(select=c("age","ageyrs","wpi","sex", "bfcur",
-                  "momage","pclit", "pceduc","momwork",
-                  "primwat",
-                  "totp", "elec",
-                  "soil","land",
-                  "rooms","animals_owned",
-                  "sc","kitchen","kitchvent", #house
-                  "hwsoap","latsoap",
-                  "sanOD","sanlat","fecessm","fecesliv",
-                   "agri"
-                   )) 
-tab1 %>% mutate_all(as.numeric) %>% summarize_all(funs(mean), na.rm=T) 
-prop.table(table(tab1$pceduc))
-prop.table(table(tab1$primwat))
+mean(villOD$villOD)
+sd(villOD$villOD)
 
-fivenum(tab1$age)
-fivenum(tab1$ageyrs)
 
 #Check and drop if any variable is  missing >50% 
 too.missing<-which(apply(preW, 2, function(x) sum(is.na(x))/length(x))>0.5)
@@ -113,7 +96,24 @@ animal.vars$dogcat[is.na(preW$an_dogcat)]<-NA
 preW<-cbind(preW,animal.vars) %>%
   subset(., select= -c(an_buff:an_dogcat))
 
+#Collapse rare categories
+table(preW$stove)
+preW$stove <- as.character(preW$stove)
+preW$stove[preW$stove=="3 stones and plastered with mud"] <- "3 stones"
+preW$stove[preW$stove!="Kerosene stove" & preW$stove!="3 stones" & preW$stove!="Gas stove (LPG or biogas)"] <- "Other"
+preW$stove <- factor(preW$stove)
 
+
+table(preW$kitchen)
+preW$kitchen <- as.character(preW$kitchen)
+preW$kitchen <- ifelse(preW$kitchen=="Outside house, open air", 0, 1)
+
+table(preW$kitchvent)
+preW$kitchvent <- as.character(preW$kitchvent)
+preW$kitchvent[preW$kitchvent=="4"] <- "not ventilated"
+preW$kitchvent[preW$kitchvent=="-99"] <- "don't know"
+preW$kitchvent[preW$kitchvent=="1"|preW$kitchvent=="2"|preW$kitchvent=="3"|preW$kitchvent=="95"] <- "ventilated"
+preW$kitchvent <- factor(preW$kitchvent)
 
 #Check missingness of continious variables
 table(is.na(preW$age))
@@ -156,18 +156,6 @@ table(is.na(W))
 preW <- cbind(W,preWcont,miss.ind)
 table(is.na(preW))
 head(preW)
-
-
-#Two variables are causing error in prescreen function due to sparsity: "wqsource"  "an_dogcat"
-#Collapse rare factor levels here
-
-table(preW$wqsource)
-levels(preW$wqsource)
-to.replace<-preW$wqsource==levels(preW$wqsource)[1]|preW$wqsource==levels(preW$wqsource)[6]|preW$wqsource==levels(preW$wqsource)[7]|is.na(preW$wqsource) #-99 and 95 are missing vars, and 5 is drink from river- set as missing here
-preW[to.replace,"wqsource"]<-levels(preW$wqsource)[8]
-table(preW$wqsource)
-
-table(preW$kitchvent)
 
 
 #drop empty levels
@@ -213,7 +201,7 @@ table(is.na(df$hhid))
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 id<-df$vilid  #SE's clusted on village id
-#id<-df$hhid  #SE's clusted on house id
+hhid<-df$hhid  #household id for household level summary statistics
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 intdate<-df$intdate
@@ -228,7 +216,7 @@ table(is.na(Wfac))
 #Save variable names
 Wvars <- colnames(Wfac)
 Wvars <- Wvars[-c(1:2,4:5)] #drop ID variables from adjustment covariates
-survey<-cbind(intdate,Y,id,H2S,Wfac)
+survey<-cbind(intdate,Y,id,hhid,H2S,Wfac)
 
 #check Wvars
 for(i in 1:ncol(Wfac)){

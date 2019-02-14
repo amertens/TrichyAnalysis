@@ -1,3 +1,4 @@
+
 rm(list=ls())
 library("ggplot2")
 library("ggthemes")
@@ -62,7 +63,6 @@ cols <- cbPalette[c(1,3,7)]
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/temp.unadjusted.GAMfits.Rdata")
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.unadjusted.GAMfits.Rdata")
-load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.unadjusted.GAMfits.stratified.Rdata")
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/temp.quartiles.Rdata")
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/HRthres.Rdata")
 
@@ -139,64 +139,49 @@ setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
 
 save(temp, rain, file ="spline_plot_facets.Rdata")
 
-
-#pdf("GAMcurves.pdf",width=10,height=8)
-pdf("GAMcurves5.2.pdf",width=5.2,height=4.16)
-
-multiplot(temp, rain, cols=1)
-
-dev.off()
-
-
-#Stratified rainfall
-
-d.rain.strat<-rbind(
-data.frame(fit.rain7.unadjLT1, lag="One week lag", strat="Low long-term rainfall"),
-data.frame(fit.rain14.unadjLT1, lag="Two week lag", strat="Low long-term rainfall"),
-data.frame(fit.rain21.unadjLT1, lag="Three week lag", strat="Low long-term rainfall"),
-data.frame(fit.rain7.unadjLT2, lag="One week lag", strat="Medium long-term rainfall"),
-data.frame(fit.rain14.unadjLT2, lag="Two week lag", strat="Medium long-term rainfall"),
-data.frame(fit.rain21.unadjLT2, lag="Three week lag", strat="Medium long-term rainfall"),
-data.frame(fit.rain7.unadjLT3, lag="One week lag", strat="High long-term rainfall"),
-data.frame(fit.rain14.unadjLT3, lag="Two week lag", strat="High long-term rainfall"),
-data.frame(fit.rain21.unadjLT3, lag="Three week lag", strat="High long-term rainfall")
-)
-
-#Convert prev to percent
-d.rain.strat$fit<-d.rain.strat$fit*100
-d.rain.strat$uprS<-d.rain.strat$uprS*100
-d.rain.strat$lwrS<-d.rain.strat$lwrS*100
-
-rainstrat<-ggplot(d.rain.strat, aes(x = newd)) +
-    coord_cartesian(ylim = c(0, 9.5)) +
-    geom_line(aes(y=fit), color="#56B4E9") +
-    geom_ribbon(aes(ymin = lwrS, ymax = uprS), alpha = 0.2, fill = "#56B4E9") +
-    geom_jitter(aes(y=Y*8,x=X), height = h*1.5, width=0.2,  alpha = 0.1, size=0.5)+
-    facet_grid( strat~ lag) +
-    labs(y = "Diarrhea prevalence (%)",
-         x = "Weekly 24 hour Rainfall accumulation average (log mm)") +
-    theme(strip.background = element_blank())
-
-
-
-setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
-#pdf("GAMcurves_stratified.pdf",width=10,height=8)
-pdf("GAMcurves_stratified5.2.pdf",width=5.2,height=4.16)
-
-rainstrat
-dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# 
+# #pdf("GAMcurves.pdf",width=10,height=8)
+# pdf("GAMcurves5.2.pdf",width=5.2,height=4.16)
+# 
+# multiplot(temp, rain, cols=1)
+# 
+# dev.off()
+# 
+# 
+# #Stratified rainfall
+# 
+# d.rain.strat<-rbind(
+# data.frame(fit.rain7.adjLT1, lag="One week lag", strat="Low long-term rainfall"),
+# data.frame(fit.rain14.adjLT1, lag="Two week lag", strat="Low long-term rainfall"),
+# data.frame(fit.rain21.adjLT1, lag="Three week lag", strat="Low long-term rainfall"),
+# data.frame(fit.rain7.adjLT2, lag="One week lag", strat="Medium long-term rainfall"),
+# data.frame(fit.rain14.adjLT2, lag="Two week lag", strat="Medium long-term rainfall"),
+# data.frame(fit.rain21.adjLT2, lag="Three week lag", strat="Medium long-term rainfall"),
+# data.frame(fit.rain7.adjLT3, lag="One week lag", strat="High long-term rainfall"),
+# data.frame(fit.rain14.adjLT3, lag="Two week lag", strat="High long-term rainfall"),
+# data.frame(fit.rain21.adjLT3, lag="Three week lag", strat="High long-term rainfall")
+# )
+# 
+# #Convert prev to percent
+# d.rain.strat$fit<-d.rain.strat$fit*100
+# d.rain.strat$uprS<-d.rain.strat$uprS*100
+# d.rain.strat$lwrS<-d.rain.strat$lwrS*100
+# 
+# rainstrat<-ggplot(d.rain.strat, aes(x = newd)) +
+#     coord_cartesian(ylim = c(0, 9.5)) +
+#     geom_line(aes(y=fit), color="#56B4E9") +
+#     geom_ribbon(aes(ymin = lwrS, ymax = uprS), alpha = 0.2, fill = "#56B4E9") +
+#     geom_jitter(aes(y=Y*8,x=X), height = h*1.5, width=0.2,  alpha = 0.1, size=0.5)+
+#     facet_grid( strat~ lag) +
+#     labs(y = "Diarrhea prevalence (%)",
+#          x = "Weekly 24 hour Rainfall accumulation average (log mm)") +
+#     theme(strip.background = element_blank())
+# 
+# 
+# 
+# setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
+# #pdf("GAMcurves_stratified.pdf",width=10,height=8)
+# pdf("GAMcurves_stratified5.2.pdf",width=5.2,height=4.16)
+# 
+# rainstrat
+# dev.off()

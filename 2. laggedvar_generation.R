@@ -1,7 +1,7 @@
 
 rm(list=ls())
 
-library(dplyr)
+library(tidyverse)
 library(foreign)
 library(zoo)
 library(usdm)
@@ -12,14 +12,36 @@ df<-read.dta("Trichy_Weather_Dec07-Apr09_formatted.dta")
 
 head(df)
 
+
+
 #Order data
 df<-arrange(df, year, month, day) %>% 
     subset(., select=c(year, month, day, maxtemp, mintemp, rain))
+
+mean(df$rain)
+sd(df$rain)
+
+#Add empty dates for 4-16-2009 to 4-18-2009 to merge lagged weather to survey
+lastdays <- data.frame(year=rep(2009, 3), month=rep(4, 3), day=c(16,17,18))
+
+df <- bind_rows(df, lastdays)
+tail(df)
+
 
 
 #Generate average temp
 df$avetemp<-(df$maxtemp+df$mintemp)/2
 
+mean(df$avetemp, na.rm=T)
+sd(df$avetemp, na.rm=T)
+
+mean(df$avetemp[df$month>9 | df$month<4], na.rm=T)
+sd(df$avetemp[df$month>9 | df$month<4], na.rm=T)
+
+mean(df$avetemp[df$month<10 & df$month>3], na.rm=T)
+sd(df$avetemp[df$month<10 & df$month>3], na.rm=T)
+
+#df$avetemp<-round(df$avetemp,0)
 
 # examine correlation between temperature and rainfall
 cor.test(df$avetemp, df$rain)
@@ -41,13 +63,6 @@ for(i in 1:dayslag){
 }
 
 
-#Generate lagged min and max temp
-for(i in 1:dayslag){
-  df<-lag.n(df=df,name="maxt",var=df$maxtemp,n=i)
-}
-for(i in 1:dayslag){
-  df<-lag.n(df=df,name="mint",var=df$mintemp,n=i)
-}
 
 
 
@@ -82,9 +97,10 @@ save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/Lag
 head(weather)
 
 
-#Get quartiles cutpoints of overall weekly mean
+#Get quartiles cutpoints of weekly mean temperature over the study period
 weekly_temp<-rollmean(weather$avetemp,7,fill=NA, align="right")
 tempQ <- as.numeric(quantile(weekly_temp, na.rm=T)[2:4])
+
 
 #Calculate moving average with different lag times
 
@@ -102,9 +118,9 @@ ave.window<-function(i, winsize, var, data){
   return(windowmean)
 }
 
-avetemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
-ave.names<-rep(NA, 21)
-for(i in 1:21){
+avetemp<-matrix(data=NA,nrow=nrow(temp),ncol=22)
+ave.names<-rep(NA, 22)
+for(i in 1:22){
   avetemp[,i]<-ave.window(i, 7, "at", temp)
   ave.names[i]<- paste0("temp.ave7.lag",i)
 }
@@ -115,7 +131,9 @@ avetemp<-as.data.frame(avetemp)
 
 #Set to date format for merge
 avetemp$intdate<-as.Date(paste(avetemp$month,avetemp$day,avetemp$year, sep="/"),"%m/%d/%Y")
-avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
+#avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
+avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag8, temp.ave7.lag15, temp.ave7.lag22)) %>%
+  rename(temp.ave7.lag7=temp.ave7.lag8, temp.ave7.lag14=temp.ave7.lag15, temp.ave7.lag21=temp.ave7.lag22)
 
 #Quartile temperatures
 avetemp$tempQ1<-cut(avetemp$temp.ave7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
@@ -123,64 +141,6 @@ avetemp$tempQ7<-cut(avetemp$temp.ave7.lag7, breaks = c(0,tempQ,999), labels=c("Q
 avetemp$tempQ14<-cut(avetemp$temp.ave7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 avetemp$tempQ21<-cut(avetemp$temp.ave7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 
-
-# Minimum temp
-min.window<-function(i, winsize, var, data){
-  col<-which(colnames(data) %in% paste0(var,".",i))
-  windowmean<-NA
-  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) min(x)))
-  return(windowmean)
-}
-
-mintemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
-min.names<-rep(NA, 21)
-for(i in 1:21){
-  mintemp[,i]<-min.window(i, 7, "at", temp)
-  min.names[i]<- paste0("temp.min7.lag",i)
-}
-mintemp<-cbind(temp[,1:3],mintemp)
-colnames(mintemp)[4:ncol(mintemp)]<-min.names
-mintemp<-as.data.frame(mintemp)
-
-
-#Set to date format for merge
-mintemp$intdate<-as.Date(paste(mintemp$month,mintemp$day,mintemp$year, sep="/"),"%m/%d/%Y")
-mintemp<-subset(mintemp, select=c(intdate, temp.min7.lag7, temp.min7.lag14, temp.min7.lag21))
-
-#Quartile temperatures
-mintemp$mintempQ1<-cut(mintemp$temp.min7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-mintemp$mintempQ7<-cut(mintemp$temp.min7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-mintemp$mintempQ14<-cut(mintemp$temp.min7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-mintemp$mintempQ21<-cut(mintemp$temp.min7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-
-# Maximum temp
-max.window<-function(i, winsize, var, data){
-  col<-which(colnames(data) %in% paste0(var,".",i))
-  windowmean<-NA
-  try(windowmean<-apply(data[,col:(col-1+winsize)],1,function(x) max(x)))
-  return(windowmean)
-}
-
-maxtemp<-matrix(data=NA,nrow=nrow(temp),ncol=21)
-max.names<-rep(NA, 21)
-for(i in 1:21){
-  maxtemp[,i]<-max.window(i, 7, "at", temp)
-  max.names[i]<- paste0("temp.max7.lag",i)
-}
-maxtemp<-cbind(temp[,1:3],maxtemp)
-colnames(maxtemp)[4:ncol(maxtemp)]<-max.names
-maxtemp<-as.data.frame(maxtemp)
-
-
-#Set to date format for merge
-maxtemp$intdate<-as.Date(paste(maxtemp$month,maxtemp$day,maxtemp$year, sep="/"),"%m/%d/%Y")
-maxtemp<-subset(maxtemp, select=c(intdate, temp.max7.lag7, temp.max7.lag14, temp.max7.lag21))
-
-#Quartile temperatures
-maxtemp$maxtempQ1<-cut(maxtemp$temp.max7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-maxtemp$maxtempQ7<-cut(maxtemp$temp.max7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-maxtemp$maxtempQ14<-cut(maxtemp$temp.max7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-maxtemp$maxtempQ21<-cut(maxtemp$temp.max7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 
 
 ###################
@@ -209,7 +169,7 @@ ave.window<-function(i, winsize, var, data){
     return(windowmean)
 }
 
-averain<-matrix(data=NA,nrow=nrow(rain),ncol=21)
+averain<-matrix(data=NA,nrow=nrow(rain),ncol=28)
 ave.names<-rep(NA, 28)
 for(i in 1:28){
   averain[,i]<-ave.window(i, 7, "rain", rain)
@@ -222,8 +182,9 @@ averain<-as.data.frame(averain)
 #Create long term rain average
 
 #60 day mean
-bimonth_rain<-rollmean(weather$rain,60,fill=NA, align="right")
+bimonth_rain<-rollmean(weather$rain,60,fill=NA, align="left")
 LTrainQ <- as.numeric(quantile(bimonth_rain,probs = seq(0, 1, 1/3), na.rm=T)[2:3])
+LTrainQ
 
 #set i to 7 days after the associated 7-day lagged variable
 averain$LT1<-ave.window(8, 60, "rain", rain)
@@ -243,7 +204,7 @@ table(averain$LT22_T)
 
 #Set date to date format for merge
 averain$intdate<-as.Date(paste(averain$month,averain$day,averain$year, sep="/"),"%m/%d/%Y")
-LT <- subset(averain, select=c(intdate, rain.ave7.lag1, rain.ave7.lag7, rain.ave7.lag14, rain.ave7.lag21, LT1, LT8, LT15, LT22, LT1_T, LT8_T, LT15_T, LT22_T))
+LT <- subset(averain, select=c(intdate, rain.ave7.lag1, rain.ave7.lag8, rain.ave7.lag15, rain.ave7.lag22, LT1, LT8, LT15, LT22, LT1_T, LT8_T, LT15_T, LT22_T))
 
 
 #Calculate heavy rainfall events
@@ -298,7 +259,10 @@ head(PriorHeavyRain,30)
 #Set to date format for merge
 PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
 PriorHeavyRain_sens<-subset(PriorHeavyRain, select=-c(year, month, day)) #Keep all lags for sensitivity analysis
-PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21))
+#PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21)) %>%
+PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag8,HeavyRain.lag15,HeavyRain.lag22)) %>%
+  rename(HeavyRain.lag7=HeavyRain.lag8, HeavyRain.lag14=HeavyRain.lag15, HeavyRain.lag21=HeavyRain.lag22)
+
 
 #Sensitivity rain dataframes
 PriorHeavyRain70<-matrix(data=NA,nrow=nrow(rain),ncol=28)
@@ -341,16 +305,12 @@ PriorHeavyRain90a<-subset(PriorHeavyRain90a, select=-c(year, month, day))
 #Load and merge in survey data
 #--------------------------------------
 
-
- load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
 
 #merge survey and temp
 dim(survey)
 dim(avetemp)
 d<-merge(survey, avetemp, by="intdate", all.x = F, all.y = F) 
-dim(d)
-d<-merge(d, mintemp, by="intdate", all.x = F, all.y = F) 
-d<-merge(d, maxtemp, by="intdate", all.x = F, all.y = F) 
 dim(d)
 colnames(d)
 
@@ -394,6 +354,6 @@ d %>% group_by(tempQ7) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.
 d %>% group_by(tempQ14) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag14),2))
 d %>% group_by(tempQ21) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag21),2))
 
-d %>% group_by(tempQ1) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag1),2))
-d %>% group_by(tempQ7) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag7),2))
-d %>% group_by(tempQ14) %>% filter(!is.na(H2S)) %>% summarize(round(mean(temp.ave7.lag14),2))
+d %>% group_by(tempQ1) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag1),2)) %>% as.data.frame()
+d %>% group_by(tempQ7) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag7),2)) %>% as.data.frame()
+d %>% group_by(tempQ14) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag14),2)) %>% as.data.frame()

@@ -1,0 +1,340 @@
+[1] 14254
+[1] 1284
+
+ 36.8    18.4 
+[1] 900
+x
+  0   1 
+648 636 
+
+0 :     648 (50.5)
+1 :     636 (49.5)
+x
+  Male Female   miss 
+   645    635      4 
+
+Female :     635 (49.5)
+Male :     645 (50.2)
+miss :     4 (0.3)
+x
+  0   1 
+872 412 
+
+1 :     412 (32.1)
+0 :     872 (67.9)
+x
+    0     1 
+11946  2308 
+
+0 :     11946 (83.8)
+1 :     2308 (16.2)
+
+ 26.8    5 
+mom literate
+x
+   0    1 miss 
+ 158  741    1 
+
+1 :     741 (82.3)
+0 :     158 (17.6)
+miss :     1 (0.1)
+x
+    No education   Primary school    Middle school      High school Higher secondary          College  Graduate school 
+             131              117              246              277               91               28                8 
+            miss 
+               2 
+
+Middle school :     246 (27.3)
+No education :     131 (14.6)
+Higher secondary :     91 (10.1)
+Primary school :     117 (13)
+High school :     277 (30.8)
+College :     28 (3.1)
+Graduate school :     8 (0.9)
+miss :     2 (0.2)
+mom works
+x
+   0    1 miss 
+ 451  434   15 
+
+1 :     434 (48.2)
+0 :     451 (50.1)
+miss :     15 (1.7)
+
+ 4.8    1.3 
+# A tibble: 1 x 2
+  `mean(x)` `sd(x)`
+      <dbl>   <dbl>
+1         1       0
+electricity
+x
+  0   1 
+ 90 810 
+
+1 :     810 (90)
+0 :     90 (10)
+dirt floor
+x
+  0   1 
+617 283 
+
+0 :     617 (68.6)
+1 :     283 (31.4)
+owns home
+x
+  0   1 
+ 64 836 
+
+1 :     836 (92.9)
+0 :     64 (7.1)
+owns land
+x
+  0   1 
+ 47 853 
+
+1 :     853 (94.8)
+0 :     47 (5.2)
+buffalo
+x
+  0   1 
+871  29 
+
+0 :     871 (96.8)
+1 :     29 (3.2)
+cow
+x
+  0   1 
+539 361 
+
+1 :     361 (40.1)
+0 :     539 (59.9)
+ox
+x
+  0   1 
+863  37 
+
+0 :     863 (95.9)
+1 :     37 (4.1)
+calf
+x
+  0   1 
+656 244 
+
+0 :     656 (72.9)
+1 :     244 (27.1)
+goat
+x
+  0   1 
+605 295 
+
+0 :     605 (67.2)
+1 :     295 (32.8)
+chicken
+x
+  0   1 
+751 149 
+
+0 :     751 (83.4)
+1 :     149 (16.6)
+dog or cat
+x
+  0   1 
+801  99 
+
+0 :     801 (89)
+1 :     99 (11)
+[1] "Primary water source"
+x
+ Private Tap   Public Tap Private Well  Public Well 
+         259          574           28           39 
+
+Public Tap :     574 (63.8)
+Public Well :     39 (4.3)
+Private Tap :     259 (28.8)
+Private Well :     28 (3.1)
+[1] "Sanitation, open defecation"
+x
+  0   1 
+155 745 
+
+1 :     745 (82.8)
+0 :     155 (17.2)
+[1] "Sanitation, private latrine"
+x
+  0   1 
+526 374 
+
+0 :     526 (58.4)
+1 :     374 (41.6)
+[1] "Thatched roof (i2)"
+x
+  0   1 
+680 220 
+
+0 :     680 (75.6)
+1 :     220 (24.4)
+[1] "Owns television"
+x
+  0   1 
+312 588 
+
+1 :     588 (65.3)
+0 :     312 (34.7)
+[1] "Owns cell phone"
+x
+  0   1 
+606 294 
+
+0 :     606 (67.3)
+1 :     294 (32.7)
+[1] "Has bank account"
+x
+  0   1 
+705 195 
+
+0 :     705 (78.3)
+1 :     195 (21.7)
+[1] "Owns motorcycle/scooter"
+x
+  0   1 
+672 228 
+
+0 :     672 (74.7)
+1 :     228 (25.3)
+[1] "Owns bicycle"
+x
+  0   1 
+213 687 
+
+1 :     687 (76.3)
+0 :     213 (23.7)
+[1] "Owns mosquito net"
+x
+  0   1 
+780 120 
+
+0 :     780 (86.7)
+1 :     120 (13.3)
+[1] "Stove type (i10)"
+x
+                 3 stones Gas stove (LPG or biogas)            Kerosene stove                     Other 
+                      454                       145                       295                         4 
+                     miss 
+                        2 
+
+3 stones :     454 (50.4)
+Kerosene stove :     295 (32.8)
+Gas stove (LPG or biogas) :     145 (16.1)
+miss :     2 (0.2)
+Other :     4 (0.4)
+[1] "Most important cooking fuel"
+x
+                   Wood                Kerosene Liquid petrol gas (LPG) 
+                    787                      24                      89 
+
+Wood :     787 (87.4)
+Liquid petrol gas (LPG) :     89 (9.9)
+Kerosene :     24 (2.7)
+[1] "HH mem. participates in committee/group"
+x
+  0   1 
+480 420 
+
+1 :     420 (46.7)
+0 :     480 (53.3)
+[1] "Credit/finance/SHG, women participate"
+x
+  0   1 
+590 310 
+
+0 :     590 (65.6)
+1 :     310 (34.4)
+[1] "Mom, dad or Prim Caregiv works in agriculture"
+x
+  0   1 
+327 573 
+
+1 :     573 (63.7)
+0 :     327 (36.3)
+[1] "Has electricity"
+x
+  0   1 
+ 90 810 
+
+1 :     810 (90)
+0 :     90 (10)
+[1] "Owns land"
+x
+  0   1 
+ 47 853 
+
+1 :     853 (94.8)
+0 :     47 (5.2)
+[1] "Scheduled Caste"
+x
+  0   1 
+783 117 
+
+0 :     783 (87)
+1 :     117 (13)
+[1] "Type of kitchen (i5)"
+x
+   0    1 miss 
+ 162  736    2 
+
+1 :     736 (81.8)
+0 :     162 (18)
+miss :     2 (0.2)
+[1] "Kitchen ventilation (i6)"
+x
+    don't know not ventilated     ventilated 
+           292             37            571 
+
+ventilated :     571 (63.4)
+not ventilated :     37 (4.1)
+don't know :     292 (32.4)
+[1] "HW station observation: flies present"
+x
+  0   1 
+562 338 
+
+0 :     562 (62.4)
+1 :     338 (37.6)
+[1] "HW station observation: water present"
+x
+  0   1 
+336 564 
+
+0 :     336 (37.3)
+1 :     564 (62.7)
+[1] "HW station observation: soap present"
+x
+  0   1 
+457 443 
+
+1 :     443 (49.2)
+0 :     457 (50.8)
+[1] "HW station observation: ash present"
+x
+  0   1 
+491 409 
+
+1 :     409 (45.4)
+0 :     491 (54.6)
+[1] "HW station observation: towel/cloth present"
+x
+  0   1 
+732 168 
+
+0 :     732 (81.3)
+1 :     168 (18.7)
+[1] "HW station observation: sink present"
+x
+  0   1 
+656 244 
+
+0 :     656 (72.9)
+1 :     244 (27.1)
+[1] "village OD"
+
+ 0.8    0.1 

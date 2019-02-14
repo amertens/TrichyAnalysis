@@ -1,6 +1,7 @@
 
 
 rm(list=ls())
+#sink("./PR.estimation.results.txt")
 if(!require("devtools")){
   install.packages("devtools", repos = "http://cran.us.r-project.org")
   devtools::install_github("hadley/devtools")
@@ -46,6 +47,39 @@ d <- d %>%  mutate(stdywk2 = stdywk) %>% arrange(individ, stdywk, age) %>% group
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 
+#Summary statistics
+summary_fun <- function(d, A, weather, strat=NULL,strat_weathervar=NULL){
+  colnames(d)[colnames(d)==A] <- "Avar"
+  colnames(d)[colnames(d)==weather] <- "weathervar"
+  if(is.null(strat)){
+    res<-d %>% group_by(Avar) %>% filter(!is.na(Y)&!is.na(Avar)) %>% summarize(N=n(), count = sum(Y), prev=round(mean(Y)*100,2), weather_ave=round(mean(weathervar),2)) %>%
+      as.data.frame()
+    print(res)
+    
+  }else{
+    colnames(d)[colnames(d)==strat] <- "strat"
+    colnames(d)[colnames(d)==strat_weathervar] <- "strat_weathervar"
+    res<-d %>% group_by(strat,Avar) %>% filter(!is.na(Y)&!is.na(Avar)&!is.na(strat)) %>% summarize(N=n(), count = sum(Y), 
+                                                                                                   prev=round(mean(Y)*100,2), weather_ave=round(mean(weathervar),2)) %>%
+      as.data.frame()
+    res2<-d %>% group_by(strat) %>% filter(!is.na(Y)&!is.na(Avar)&!is.na(strat)) %>% summarize(strat_ave=round(mean(strat_weathervar),2)) %>%
+      as.data.frame()
+    print(res)
+    print(res2)
+  }
+}
+summary_fun(d, "tempQ7", "temp.ave7.lag7")
+summary_fun(d, "tempQ14", "temp.ave7.lag14")
+summary_fun(d, "tempQ21", "temp.ave7.lag21")
+
+summary_fun(d, "HeavyRain.lag7","rain.ave7.lag8")
+summary_fun(d, "HeavyRain.lag14","rain.ave7.lag15")
+summary_fun(d, "HeavyRain.lag21","rain.ave7.lag22")
+
+summary_fun(d, "HeavyRain.lag7","rain.ave7.lag8", "LT8_T", "LT8")
+summary_fun(d, "HeavyRain.lag14","rain.ave7.lag15", "LT15_T", "LT15")
+summary_fun(d, "HeavyRain.lag21","rain.ave7.lag22", "LT22_T", "LT22")
+
 
 #---------------------------
 #Temperature
@@ -62,13 +96,13 @@ T3<-trichy_gamm(d, A="tempQ21")
 T3
 
 #Adjusted
-T1_adj<-trichy_gamm(d, A="tempQ7", weathervar="rain.ave7.lag7", Wvars = Wvars)
+T1_adj<-trichy_gamm(d, A="tempQ7", weathervar="rain.ave7.lag8", Wvars = Wvars)
 T1_adj
 
-T2_adj<-trichy_gamm(d, A="tempQ14", weathervar="rain.ave7.lag14", Wvars = Wvars)
+T2_adj<-trichy_gamm(d, A="tempQ14", weathervar="rain.ave7.lag15", Wvars = Wvars)
 T2_adj
 
-T3_adj<-trichy_gamm(d, A="tempQ21", weathervar="rain.ave7.lag21", Wvars = Wvars)
+T3_adj<-trichy_gamm(d, A="tempQ21", weathervar="rain.ave7.lag22", Wvars = Wvars)
 T3_adj
 
 #---------------------------
@@ -129,6 +163,22 @@ HR3_strat_adj
 
 dH2S <- d %>% subset(., select=-Y) %>% filter(!is.na(H2S)) %>% rename(Y=H2S) %>% as.data.frame()
 
+#summary statistics
+summary_fun(dH2S, "tempQ1", "temp.ave7.lag1")
+summary_fun(dH2S, "tempQ7", "temp.ave7.lag7")
+summary_fun(dH2S, "tempQ14", "temp.ave7.lag14")
+
+summary_fun(dH2S, "HeavyRain.lag1","rain.ave7.lag1")
+summary_fun(dH2S, "HeavyRain.lag7","rain.ave7.lag8")
+summary_fun(dH2S, "HeavyRain.lag14","rain.ave7.lag15")
+
+summary_fun(dH2S, "HeavyRain.lag1","rain.ave7.lag1", "LT1_T", "LT1")
+summary_fun(dH2S, "HeavyRain.lag7","rain.ave7.lag8", "LT8_T", "LT8")
+summary_fun(dH2S, "HeavyRain.lag14","rain.ave7.lag15", "LT15_T", "LT15")
+
+#Prevalence by sampling round
+dH2S %>% group_by(round, vilid) %>% summarise(mn=mean(Y)) %>% ungroup %>% summarise(min(mn), mean(mn)) 
+dH2S %>% group_by(round) %>% summarise(mn=mean(Y)) %>% ungroup %>% summarise(min(mn), mean(mn)) 
 
 #---------------------------
 #Temperature
@@ -143,6 +193,16 @@ h2s.T2
 
 h2s.T3<-trichy_gamm(dH2S, Y="H2S", A="tempQ14")
 h2s.T3
+
+#Adjusted
+h2s.T1_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ1", weathervar="rain.ave7.lag1",  Wvars = Wvars)
+h2s.T1_adj
+
+h2s.T2_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ7", weathervar="rain.ave7.lag8", Wvars = Wvars)
+h2s.T2_adj
+
+h2s.T3_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ14", weathervar="rain.ave7.lag15", Wvars = Wvars)
+h2s.T3_adj
 
 
 #---------------------------
@@ -196,128 +256,15 @@ h2s.HR3_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14", strat="LT15_T
 h2s.HR3_strat_adj
 
 
-#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# Sensitivity Analyses
-#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-
-#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# Subgroup Analyses
-#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-
-
-# Min and max temp
-minT1<-trichy_gamm(d, A="mintempQ7")
-minT1
-
-minT2<-trichy_gamm(d, A="mintempQ14")
-minT2
-
-minT3<-trichy_gamm(d, A="mintempQ21")
-minT3
-
-
-maxT1<-trichy_gamm(d, A="maxtempQ7")
-maxT1
-
-maxT2<-trichy_gamm(d, A="maxtempQ14")
-maxT2
-
-maxT3<-trichy_gamm(d, A="maxtempQ21")
-maxT3
-
-
-  
-  
-  
-
-#stratified by intervention
-#NOTE: maybe change function to include interaction term and extract results from that
-
-T1_wpi<-trichy_gamm(d, A="tempQ7", strat="wpi")
-T1_wpi
-
-T2_wpi<-trichy_gamm(d, A="tempQ14", strat="wpi")
-T2_wpi
-
-T3_wpi<-trichy_gamm(d, A="tempQ21", strat="wpi")
-T3_wpi
-
-T1_wpi_adj<-trichy_gamm(d, A="tempQ7", strat="wpi", weathervar="rain.ave7.lag7", Wvars = Wvars)
-T1_wpi_adj
-
-T2_wpi_adj<-trichy_gamm(d, A="tempQ14", strat="wpi", weathervar="rain.ave7.lag14", Wvars = Wvars)
-T2_wpi_adj
-
-T3_wpi_adj<-trichy_gamm(d, A="tempQ21", strat="wpi", weathervar="rain.ave7.lag21", Wvars = Wvars)
-T3_wpi_adj
-
-
-HR1_wpi<-trichy_gamm(d, A="HeavyRain.lag7", strat="wpi")
-HR1_wpi
-
-HR2_wpi<-trichy_gamm(d, A="HeavyRain.lag14", strat="wpi")
-HR2_wpi
-
-HR3_wpi<-trichy_gamm(d, A="HeavyRain.lag21", strat="wpi")
-HR3_wpi
-
-HR1_wpi_adj<-trichy_gamm(d, A="HeavyRain.lag7", strat="wpi", weathervar="temp.ave7.lag7", Wvars = Wvars)
-HR1_wpi_adj
-
-HR2_wpi_adj<-trichy_gamm(d, A="HeavyRain.lag14", strat="wpi", weathervar="temp.ave7.lag14", Wvars = Wvars)
-HR2_wpi_adj
-
-HR3_wpi_adj<-trichy_gamm(d, A="HeavyRain.lag21", strat="wpi", weathervar="temp.ave7.lag21", Wvars = Wvars)
-HR3_wpi_adj
-
-
-#Stratified
-d$LT8_wpi <- factor(paste0(d$LT8_T, "_", d$wpi))
-d$LT15_wpi <- paste0(d$LT15_T, "_", d$wpi)
-d$LT22_wpi <- paste0(d$LT22_T, "_", d$wpi)
-d$LT8_wpi[d$LT8_wpi=="NA_0" | d$LT8_wpi=="NA_1"] <- NA
-d$LT15_wpi[d$LT15_wpi=="NA_0" | d$LT15_wpi=="NA_1"] <- NA
-d$LT22_wpi[d$LT22_wpi=="NA_0" | d$LT22_wpi=="NA_1"] <- NA
-
-
-HR1_wpi_strat<-trichy_gamm(d, A="HeavyRain.lag7", strat="LT8_wpi")
-HR1_wpi_strat
-
-HR2_wpi_strat<-trichy_gamm(d, A="HeavyRain.lag14", strat="LT15_wpi")
-HR2_wpi_strat
-
-HR3_wpi_strat<-trichy_gamm(d, A="HeavyRain.lag21", strat="LT22_wpi")
-HR3_wpi_strat
-
-  
-  
-#90th percentile of all days (lower threshold than 80th percentile of rainy days)
-HR1_90<-trichy_gamm(d, A="HeavyRain90.lag7")
-HR1_90
-
-HR2_90<-trichy_gamm(d, A="HeavyRain90.lag14")
-HR2_90
-
-HR3_90<-trichy_gamm(d, A="HeavyRain90.lag21")
-HR3_90
-
-#stratified
-HR1_strat_90<-trichy_gamm(d, A="HeavyRain90.lag7", strat="LT8_T")
-HR1_strat_90
-
-HR2_strat_90<-trichy_gamm(d, A="HeavyRain90.lag14", strat="LT15_T")
-HR2_strat_90
-
-HR3_strat_90<-trichy_gamm(d, A="HeavyRain90.lag21", strat="LT22_T")
-HR3_strat_90
-
-  
-
-
-
-
+# save H2S results
+save(h2s.T1, h2s.T2, h2s.T3,
+     h2s.T1_adj, h2s.T2_adj, h2s.T3_adj,
+     h2s.HR1, h2s.HR2, h2s.HR3,
+     h2s.HR1_strat, h2s.HR2_strat, h2s.HR3_strat,
+     h2s.HR1_adj, h2s.HR2_adj, h2s.HR3_adj,
+     h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj, 
+     file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_H2S_results.Rdata")
 
 
 
@@ -349,31 +296,51 @@ res_H2S <- rbind( h2s.T1, h2s.T2, h2s.T3,
  h2s.HR1, h2s.HR2, h2s.HR3,
  h2s.HR1_strat, h2s.HR2_strat, h2s.HR3_strat)
 
-res_H2S_adj <- rbind(h2s.HR1_adj, h2s.HR2_adj, h2s.HR3_adj,
-h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj)
-
-#subgroups
-
+res_H2S_adj <- rbind(h2s.T1_adj, h2s.T2_adj, h2s.T3_adj,
+                     h2s.HR1_adj, h2s.HR2_adj, h2s.HR3_adj,
+ h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj)
 
 
-res_minmax_temp <- rbind(maxT1, maxT2, maxT3, minT1,  minT2, minT3)
-res_wpi_strat <- rbind(HR1_wpi, HR2_wpi, HR3_wpi, HR1_wpi_adj, HR2_wpi_adj, HR3_wpi_adj)
-
-#90% rain
-res_HR90 <- rbind(HR1_90, HR2_90, HR3_90, HR1_strat_90, HR2_strat_90, HR3_strat_90)
 
 
 
 save(res_prim, res_prim_adj, res_H2S, res_H2S_adj,
      file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_plot_dfs.Rdata")
 
+res_prim$PR <- round(res_prim$PR, 2)
+res_prim$ci.lb <- round(res_prim$ci.lb, 2)
+res_prim$ci.ub <- round(res_prim$ci.ub, 2)
+res_prim$y <- paste0(res_prim$PR," (", res_prim$ci.lb,", ", res_prim$ci.ub,")")
 
-save(res_minmax_temp, res_wpi_strat, res_HR90,
-     file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_sensitivity_dfs.Rdata")
+df <- res_prim[,c(2,8)]
+df
+noquote(df[,2])
 
+res_prim_adj$PR <- round(res_prim_adj$PR, 2)
+res_prim_adj$ci.lb <- round(res_prim_adj$ci.lb, 2)
+res_prim_adj$ci.ub <- round(res_prim_adj$ci.ub, 2)
+res_prim_adj$y <- paste0(res_prim_adj$PR," (", res_prim_adj$ci.lb,", ", res_prim_adj$ci.ub,")")
 
-# res_H2S2 <- res_H2S
-# res_H2S_adj2 <- res_H2S_adj
-# load("C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_plot_dfs.Rdata")
-# res_H2S <- res_H2S2
-# res_H2S_adj <- res_H2S_adj2
+df <- res_prim_adj[,c(2,8)]
+df
+noquote(df[,2])
+
+res_H2S$PR <- round(res_H2S$PR, 2)
+res_H2S$ci.lb <- round(res_H2S$ci.lb, 2)
+res_H2S$ci.ub <- round(res_H2S$ci.ub, 2)
+res_H2S$y <- paste0(res_H2S$PR," (", res_H2S$ci.lb,", ", res_H2S$ci.ub,")")
+
+df <- res_H2S[,c(2,8)]
+df
+noquote(df[,2])
+
+res_H2S_adj$PR <- round(res_H2S_adj$PR, 2)
+res_H2S_adj$ci.lb <- round(res_H2S_adj$ci.lb, 2)
+res_H2S_adj$ci.ub <- round(res_H2S_adj$ci.ub, 2)
+res_H2S_adj$y <- paste0(res_H2S_adj$PR," (", res_H2S_adj$ci.lb,", ", res_H2S_adj$ci.ub,")")
+
+df <- res_H2S_adj[,c(2,8)]
+df
+noquote(df[,2])
+
+sink()

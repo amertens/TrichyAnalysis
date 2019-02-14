@@ -203,7 +203,6 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   df <-df[!is.na(df$A),]
   nlevels <- length(unique(df$A))
   
-  #Wall<-subset(df, select=c("Weather", Wvars[-c(1:34,75:86)]))
   Wall<-subset(df, select=c("Weather", Wvars))
   Wall<-droplevels(Wall)
 
@@ -211,12 +210,7 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   
 
   d.W<-subset(Wall, select=Wscreen)
-  # d.W<-design_matrix(d.W)
-  # #remove near zero variance columns
-  # preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
-  # d.W = predict(preproc, d.W)
-  # d.W<-droplevels(d.W)
-  
+
  Ws <- colnames(d.W)
  dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
 
@@ -225,7 +219,21 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   
   m<-NULL
   try(m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
-  if(is.null(m)){m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))}
+  if(is.null(m)){try(m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log')))}
+  if(is.null(m)){
+    #If error from "Singularity in backsolve", try dropping zero-variance covariates:
+    d.W<-design_matrix(d.W)
+    #remove near zero variance columns
+    preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
+    d.W = predict(preproc, d.W)
+    d.W<-droplevels(d.W)
+
+    Ws <- colnames(d.W)
+    dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
+    frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
+    
+    m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
+    }
   
   
   res <- summary(m$gam)
