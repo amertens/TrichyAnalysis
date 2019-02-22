@@ -107,7 +107,11 @@ p1<-ggplot() +
 p1 <- p1 + geom_point(aes(x = long, y = lat),pch=13,  data = airport, size=5) 
 p1 <- p1 + geom_text(aes(x = long, y = lat + 0.05, label = "Tiruchirappalli\nAirport"), colour="grey20", size=3, data = airport, fontface='bold',inherit.aes=FALSE)
 
-
+p1 <- p1 + theme(legend.position = c(0.17, 0.8), 
+           legend.key = element_rect(size = 0.5),
+           legend.title = element_text(size = 10), legend.text = element_text(size = 8),
+           legend.key.size = unit(0.5, "cm"), legend.key.width = unit(0.5, "cm"),
+           legend.background = element_rect(color = "grey10", size = 0.3, linetype = "solid"))
 
 #Add India map inset
 p2<-ggplot()+geom_polygon(data=india, aes(long,lat,group=group),colour="grey10",fill="#fff7bc")+  
@@ -136,7 +140,8 @@ pdf(file="Figure1.pdf",width=6,height=4.8)
 grid.newpage()
 v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
 #v2<-viewport(width = 0.3, height = 0.3, x = 0.7127, y = 0.19425) #plot area for the inset map
-v2<-viewport(width = 0.4, height = 0.4, x = 0.195, y = 0.244, clip="off") #plot area for the inset map
+#v2<-viewport(width = 0.4, height = 0.4, x = 0.195, y = 0.244, clip="off") #plot area for the inset map
+v2<-viewport(width = 0.4, height = 0.4, x = 0.295, y = 0.239, clip="off") #plot area for the inset map
 print(p1,vp=v1) 
 print(p2,vp=v2)
 dev.off()

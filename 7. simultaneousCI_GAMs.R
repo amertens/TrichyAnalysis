@@ -106,8 +106,7 @@ pred<-data.frame(Y=fitd$Y, X=fitd$Age, pred, Pval=rep(pval, nrow(fitd)), degrees
 #GAM temperature and rainfall fits
 ######################################
 
-# setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
-# load("temp.datasets.Rdata")
+
 
 try(setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data"))
 
@@ -121,79 +120,25 @@ fit.temp7.unadj <- GAM_simulCI(Y=d$Y,Age=d$temp.ave7.lag7,id=d$id,  gamdf = c(1:
 fit.temp14.unadj <- GAM_simulCI(Y=d$Y,Age=d$temp.ave7.lag14,id=d$id,  gamdf = c(1:10))
 fit.temp21.unadj <- GAM_simulCI(Y=d$Y,Age=d$temp.ave7.lag21,id=d$id,  gamdf = c(1:10))
 
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
 save(fit.temp7.unadj,fit.temp14.unadj,fit.temp21.unadj, file="temp.unadjusted.GAMfits.Rdata")
 
 
 
-# 
-# load("C:/Users/andre/Dropbox/Trichy analysis/Results/rain.datasets.Rdata")
-# head(d)
+
 set.seed(12345)
- fit.rain7.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag8+.1),id=d$id, imputeX=T, gamdf = c(1:10))
- fit.rain14.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag15+.1),id=d$id, imputeX=T, gamdf = c(1:10))
- fit.rain21.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag22+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain7.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag8*7+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain14.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag15*7+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+ fit.rain21.unadj <- GAM_simulCI(Y=d$Y,Age=log(d$rain.ave7.lag22*7+.1),id=d$id, imputeX=T, gamdf = c(1:10))
+setwd("C:/Users/andre/Dropbox/Trichy analysis/Results/")
 save(fit.rain7.unadj,fit.rain14.unadj,fit.rain21.unadj, file="rain.unadjusted.GAMfits.Rdata")
 
-
+#Degrees freedom from each model
 fit.temp7.unadj$degrees.freedom[1]
 fit.temp14.unadj$degrees.freedom[1]
 fit.temp21.unadj$degrees.freedom[1]
 fit.rain7.unadj$degrees.freedom[1]
 fit.rain14.unadj$degrees.freedom[1]
 fit.rain21.unadj$degrees.freedom[1]
-
-
-
-
-######################################
-#GAM long-term rainfall subgroup fits
-######################################
-
-head(d)
-df<-subset(d, select=c(Y, id, rain.ave7.lag7, rain.ave7.lag14, rain.ave7.lag21,LT8, LT15, LT22))
-
-  LT<-df$LT8
-  ntiles<-as.vector(quantile(LT, probs = seq(0, 1, 0.3333), na.rm=T)[2:3])
-  df$LTQ8<-2
-  df$LTQ8[LT < ntiles[1]]<-1
-  df$LTQ8[LT >= ntiles[2]]<-3
-  
-  LT<-df$LT15
-  ntiles<-as.vector(quantile(LT, probs = seq(0, 1, 0.3333), na.rm=T)[2:3])
-  df$LTQ15<-2
-  df$LTQ15[LT < ntiles[1]]<-1
-  df$LTQ15[LT >= ntiles[2]]<-3
-  
-  LT<-df$LT22
-  ntiles<-as.vector(quantile(LT, probs = seq(0, 1, 0.3333), na.rm=T)[2:3])
-  df$LTQ22<-2
-  df$LTQ22[LT < ntiles[1]]<-1
-  df$LTQ22[LT >= ntiles[2]]<-3
-  
-   
-df <- subset(df, select=c(Y, id, rain.ave7.lag7, rain.ave7.lag14, rain.ave7.lag21,LTQ8, LTQ15, LTQ22))
-
-#Diarrhea outcome fits
-set.seed(1111)
-fit.rain7.unadjLT1 <- GAM_simulCI(Y=df$Y[df$LTQ8==1],Age=log(df$rain.ave7.lag7[df$LTQ8==1]+.1),id=df$id[df$LTQ8==1], imputeX=T, gamdf = c(1:10))
-fit.rain7.unadjLT2 <- GAM_simulCI(Y=df$Y[df$LTQ8==2],Age=log(df$rain.ave7.lag7[df$LTQ8==2]+.1),id=df$id[df$LTQ8==2], imputeX=T, gamdf = c(1:10))
-fit.rain7.unadjLT3 <- GAM_simulCI(Y=df$Y[df$LTQ8==3],Age=log(df$rain.ave7.lag7[df$LTQ8==3]+.1),id=df$id[df$LTQ8==3], imputeX=T, gamdf = c(1:10))
-
-fit.rain14.unadjLT1 <- GAM_simulCI(Y=df$Y[df$LTQ15==1],Age=log(df$rain.ave7.lag14[df$LTQ15==1]+.1),id=df$id[df$LTQ15==1], imputeX=T, gamdf = c(1:10))
-fit.rain14.unadjLT2 <- GAM_simulCI(Y=df$Y[df$LTQ15==2],Age=log(df$rain.ave7.lag14[df$LTQ15==2]+.1),id=df$id[df$LTQ15==2], imputeX=T, gamdf = c(1:10))
-fit.rain14.unadjLT3 <- GAM_simulCI(Y=df$Y[df$LTQ15==3],Age=log(df$rain.ave7.lag14[df$LTQ15==3]+.1),id=df$id[df$LTQ15==3], imputeX=T, gamdf = c(1:10))
-
-fit.rain21.unadjLT1 <- GAM_simulCI(Y=df$Y[df$LTQ22==1],Age=log(df$rain.ave7.lag21[df$LTQ22==1]+.1),id=df$id[df$LTQ22==1], imputeX=T, gamdf = c(1:10))
-fit.rain21.unadjLT2 <- GAM_simulCI(Y=df$Y[df$LTQ22==2],Age=log(df$rain.ave7.lag21[df$LTQ22==2]+.1),id=df$id[df$LTQ22==2], imputeX=T, gamdf = c(1:10))
-fit.rain21.unadjLT3 <- GAM_simulCI(Y=df$Y[df$LTQ22==3],Age=log(df$rain.ave7.lag21[df$LTQ22==3]+.1),id=df$id[df$LTQ22==3], imputeX=T, gamdf = c(1:10))
-
-save(fit.rain7.unadjLT1,fit.rain7.unadjLT2,fit.rain7.unadjLT3,
-     fit.rain14.unadjLT1,fit.rain14.unadjLT2,fit.rain14.unadjLT3,
-     fit.rain21.unadjLT1,fit.rain21.unadjLT2,fit.rain21.unadjLT3,
-     file="rain.unadjusted.GAMfits.stratified.Rdata")
-
-
-  
-
 
 

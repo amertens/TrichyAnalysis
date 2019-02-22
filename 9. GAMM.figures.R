@@ -6,7 +6,6 @@ library(colourpicker)
 library(cowplot)
 library(stringr)
 
-#source("C:/Users/andre/Documents/TrichyAnalysis/0. TrichyFunctions.R")
     #plot parameters
     theme_set(theme_bw())
     cols=c("(ref.)"="#919191",
@@ -24,7 +23,7 @@ library(stringr)
 # Function to combine plots 
 # into one figure
 #------------------------------
-PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8)){
+PR_plotfun <- function(df, xlab="",title="", yticks){
 
   df$strat <- factor(df$strat, levels=unique(df$strat))
   df$lag <- factor(df$lag, levels=unique(df$lag))
@@ -49,33 +48,9 @@ PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8)){
   return(p)
 }
 
-PR_plotfun_strat <- function(df, xlab="",title="", yticks=c(0.0625,0.125,0.25,0.5,1,2,4,8)){
-
-  df$strat <- factor(df$strat, levels=unique(df$strat))
-  df$lag <- factor(df$lag, levels=unique(df$lag))
-
-  p<-ggplot(df, aes(x=strat)) +
-      geom_point(aes(y=PR, fill=strat, color=strat), size = 1) +
-      geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
-                     alpha=0.5, size = 3) +
-      labs(x = xlab, y = "Prevalence Ratio") +
-      geom_hline(yintercept = 1) +
-      coord_cartesian(ylim=range(yticks)) +
-      scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
-      scale_fill_manual(name = "strat", values=cols) +
-      scale_colour_manual(name = "strat",values=cols) +
-      theme(strip.background = element_blank(),
-        legend.position="none",
-        strip.text.x = element_text(size=12),
-        axis.text.x = element_text(size=12, angle = 45, hjust = 1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-      facet_wrap(lag~int,  scales = "fixed", nrow = 1) +
-      ggtitle(title)
-  return(p)
-}
 
 
-trichy_multiplot <- function(d, titlelab=""){
+trichy_multiplot <- function(d){
 
 
     #Clean data frames
@@ -130,11 +105,11 @@ trichy_multiplot <- function(d, titlelab=""){
 
     ptemp <- prain <- ptempH2s <- pH2S <- NULL
       if(nrow(d1)>0){
-        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Prevalence ratios of diarrhea across quartiles of weekly mean temperature",titlelab))
+        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Prevalence ratios of diarrhea across quartiles of weekly mean temperature"), yticks=c(0.5,1,2,4,8))
       }
 
       if(nrow(d2)>0){
-        prain <- PR_plotfun(df=d2, xlab="Long-term rainfall strata", title=paste0("Heavy rainfall - diarrhea association, unstratified and stratified by 60-day rain trends",titlelab))
+        prain <- PR_plotfun(df=d2, xlab="60-day rain trend", title=paste0("Heavy rainfall - diarrhea association, unstratified and stratified by 60-day rain trends"), yticks=c(0.125,0.25,0.5,1,2,4))
       }
 
       if(nrow(d3)>0){
@@ -142,7 +117,7 @@ trichy_multiplot <- function(d, titlelab=""){
       }
 
       if(nrow(d4)>0){
-        pH2S <- PR_plotfun(df=d4, xlab="Long-term rainfall strata", title=expression('Heavy rainfall - drinking water H'[2]*'S association, unstratified and stratified by 60-day rain trends'), yticks=c(0.8, 0.87, 1, 1.15, 1.33))
+        pH2S <- PR_plotfun(df=d4, xlab="60-day rain trend", title=expression('Heavy rainfall - drinking water H'[2]*'S association, unstratified and stratified by 60-day rain trends'), yticks=c(0.75, 0.87, 1, 1.15, 1.33))
       }
     plist <- list(ptemp, prain, ptempH2s,pH2S)
     names(plist) <- seq_along(plist)
@@ -165,7 +140,6 @@ trichy_multiplot <- function(d, titlelab=""){
 
 
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_results.Rdata")
-#load("C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_plot_dfs.Rdata")
 
 
 
@@ -191,17 +165,14 @@ h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj)
 
 
 #primary plots
-p <- trichy_multiplot(res_prim_adj, titlelab = "")
+p <- trichy_multiplot(res_prim_adj)
 
 
-pH2S <- trichy_multiplot(res_H2S_adj, titlelab = "")
+pH2S <- trichy_multiplot(res_H2S_adj)
 
 
 
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
 save(p, pH2S, file ="gamm_plot_facets.Rdata")
-
-ggsave(p$plot , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure3_alt.pdf",width=10.4,height=8.32)    
-ggsave(pH2S$plot , file="C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/Figure4.pdf",width=10.4,height=8.32)      
 
 

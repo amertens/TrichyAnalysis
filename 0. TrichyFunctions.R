@@ -1,166 +1,5 @@
 
 
-
-
-
-####################
-#Quartile analysis function
-####################
-
-
-quart_tmle<-function(d,Wvars=NULL,weather="tempQ7",q=c(1,4),cutoff=4, library=NULL){
-colnames(d)[which( colnames(d)==paste0(weather))]="quartile"
-
-# df<-d%>%
-#   mutate(quartile = ntile(weather, cutoff))%>%
-#   subset(quartile==q[1]|quartile==q[2])%>%
-#   mutate(A=ifelse(quartile==q[2],1,0))
-
-#d$quartile<-cut(d$weather, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-
-df <- d[d$quartile==levels(d$quartile)[q[1]]|
-           d$quartile==levels(d$quartile)[q[2]],]
-df$A=ifelse(df$quartile==levels(df$quartile)[q[2]],1,0)
-
-print(table(df$Y, df$quartile))
-
-if(!is.null(Wvars)){
-  Wall<-subset(df, select=Wvars)
-}
-
-
-if(is.null(Wvars)){
-  res<-as.numeric(washb_glm(Y=df$Y, tr=df$A, id=df$id, contrast=c(0,1), family=poisson(link='log'))$TR)
-        
-}else{
- 
-  Wscreen <- washb_prescreen(Y=df$Y,Ws=Wall,family="binomial", pval = 0.2 ,print=T)
-  W<-subset(Wall, select=Wscreen)
-  W<-design_matrix(W)
-  #remove near zero variance columns
-  preproc = caret::preProcess(W, method = c("zv", "nzv"))
-  W = predict(preproc, W)
-  W<-droplevels(W)
-  d<-cbind(df$Y,df$A,W)
-  d<-na.omit(d)
-
-
-      res<-tmle(Y=d[,1],A=d[,2],W=d[,-c(1:2)], family="binomial",Q.SL.library=library,g.SL.library=library,id=df$id)
-          }  
-
-  return(res)
-}
-
-
-
-
-
-####################
-#Heavy rain TMLE function
-####################
-
-HeavyRainTMLE<-function(dat=d,i,Wvars=NULL,sl.library=library){
-  W<-NULL
-  res<-matrix(NA, nrow=1, ncol=8)
-  set.seed(12345)
- colnames(dat)[which(colnames(dat)==paste0("HeavyRain.lag",i))]="HeavyRain"
-
- df<-dat
-
-  a=round(sum(df$HeavyRain==1 & df$Y==1, na.rm=T),0)
-  b=round(sum(df$HeavyRain==1 & df$Y==0, na.rm=T),0)
-  c=round(sum(df$HeavyRain==0 & df$Y==1, na.rm=T),0)
-  D=round(sum(df$HeavyRain==0 & df$Y==0, na.rm=T),0)
-  
-if(!is.null(Wvars)){
-  Wall<-subset(df, select=Wvars)
-}
-if(is.null(Wvars)){
-  
-      res<-as.numeric(washb_glm(Y=df$Y, tr=df$HeavyRain, id=df$id, contrast=c(0,1), family=poisson(link='log'))$TR)
-    res.vec<-c(a, b, c, D, res)
-    names(res.vec) <- c("a","b","c","d","PR", "ci.lb", "ci.ub", "logPR", "se.logPR", "Z", "p")
-
-}else{
-  Keep<-rep(T, ncol(Wall))
-  for(i in 1:ncol(Wall)){
-    if(length(levels(Wall[,i]))==1){
-      print(table(Wall$wqsource))
-      Keep[i]<-F
-    }
-  }
-  
-  Wall<-droplevels(Wall)
-  Wscreen <- washb_prescreen(Y=df$Y,Ws=Wall,family="binomial", pval = 0.2 ,print=T)
-  d.W<-subset(Wall, select=Wscreen)
-  d.W<-design_matrix(d.W)
-  #remove near zero variance columns
-  preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
-  d.W = predict(preproc, d.W)
-  fit<-tmle(Y=df$Y,A=df$HeavyRain,W=d.W, family="binomial",Q.SL.library=sl.library,g.SL.library=sl.library,id=df$id)
-  res[1,c(1:4)]<-c(a,b,c,D)
-  res[1,5]<-fit$estimates$RR$psi
-  res[1,c(6,7)]<-fit$estimates$RR$CI
-  res[1,8]<-fit$estimates$RR$pvalue
-  res.vec<-as.vector(res)
-}
-  return(res.vec)
-}
-  
-
-
-
-####################
-# H2S Heavy rain TMLE function
-####################
-
-
-H2STMLE<-function(dat=d,i,Wvars=NULL,sl.library=library, seed=12345){
-  W<-NULL
-  res<-matrix(NA, nrow=1, ncol=8)
-  set.seed(seed)
- colnames(dat)[which(colnames(dat)==paste0("HeavyRain.lag",i))]="HeavyRain"
- df<-dat
- df$h2s <- df$H2S
-
-  a=round(sum(df$HeavyRain==1 & df$h2s==1, na.rm=T),0)
-  b=round(sum(df$HeavyRain==1 & df$h2s==0, na.rm=T),0)
-  c=round(sum(df$HeavyRain==0 & df$h2s==1, na.rm=T),0)
-  D=round(sum(df$HeavyRain==0 & df$h2s==0, na.rm=T),0)
-  cat(a,"\n",b,"\n",c,"\n",D,"\n")
-  
-if(!is.null(Wvars)){
-  Wall<-subset(df, select=Wvars)
-}
-if(is.null(Wvars)){
- 
-    res<-as.numeric(washb_glm(Y=df$h2s, tr=df$HeavyRain, id=df$id, contrast=c(0,1), family=poisson(link='log'))$TR)
-    res.vec<-c(a, b, c, D, res)
-    names(res.vec) <- c("a","b","c","d","PR", "ci.lb", "ci.ub", "logPR", "se.logPR", "Z", "p")
-
-}else{
-  Wall<-Wall[!is.na(df$h2s),]
-  Wall<-droplevels(Wall)
-
-  Wscreen <- washb_prescreen(Y=df$h2s[!is.na(df$h2s)],Ws=Wall,family="binomial", pval = 0.2 ,print=T)
-  d.W<-subset(Wall, select=Wscreen)
-  d.W<-design_matrix(d.W)
-  #remove near zero variance columns
-  preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
-  d.W = predict(preproc, d.W)
-  d.W<-droplevels(d.W)
-  fit<-tmle(Y=df$h2s[!is.na(df$h2s)],A=df$HeavyRain[!is.na(df$h2s)],W=d.W, family="binomial",Q.SL.library=sl.library,g.SL.library=sl.library,id=df$id[!is.na(df$h2s)])
-  res[1,c(1:4)]<-c(a,b,c,D)
-  res[1,5]<-fit$estimates$RR$psi
-  res[1,c(6,7)]<-fit$estimates$RR$CI
-  res[1,8]<-fit$estimates$RR$pvalue
-  res.vec<-as.vector(res)
-}
-  return(res.vec)
-}
-
-
-
 ####################
 # GAMM AR1 functions
 ####################
@@ -169,6 +8,7 @@ if(is.null(Wvars)){
 
 #Make GAMM analysis function
 gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
+  set.seed(12345)
   df <-data %>% subset(., select=c("Y","stdywk", "individ", "vilid",Avar))
   colnames(df)[colnames(df)==Avar] <- "A"
   df <-df[!is.na(df$A),]
@@ -195,7 +35,7 @@ gammAR1 <- function(data, Avar, Yvar="Diarrhea", strat=NULL){
 
 #Make GAMM analysis function
 gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wvars){
- 
+  set.seed(12345)
   df <-data %>% subset(., select=c("Y","stdywk", "individ", "vilid",Avar, weathervar, Wvars))
   colnames(df)[colnames(df)==Avar] <- "A"
   colnames(df)[colnames(df)==weathervar] <- "Weather"
@@ -218,8 +58,8 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
   
   m<-NULL
-  try(m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
-  if(is.null(m)){try(m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log')))}
+  try(m <- gamm(formula = as.formula(frm), data=dm, random =  list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
+  if(is.null(m)){try(m <- gamm(formula = as.formula(frm), data=dm, random =  list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log')))}
   if(is.null(m)){
     #If error from "Singularity in backsolve", try dropping zero-variance covariates:
     d.W<-design_matrix(d.W)
@@ -238,8 +78,6 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   
   res <- summary(m$gam)
   
-  
-  #print(res)
   resdf <- data.frame(outcome=rep(Yvar,nlevels-1), exposure=rep(Avar,nlevels-1), 
                       PR=exp(res$p.coeff)[2:nlevels], 
                       ci.lb=exp(res$p.coeff[2:nlevels] - res$se[2:nlevels] * 1.96), 
@@ -322,55 +160,6 @@ screen.lasso <- function(Y, X, family, alpha = 1, minscreen = 2, nfolds = 5, nla
 
 #axis formatting
 scaleFUN <- function(x) sprintf("%.2f", x)
-
-
-
-# 
-# RR_plotfun <- function(df, xlab="Quartile contrast", title="", yticks=c(0.125,0.25,0.5,1,2,4,8), cols= tempcol){
-#   
-#   p<-ggplot(df, aes(x=strata)) + 
-#     geom_point(aes(y=PR, fill=strata, color=strata), size = 4) +
-#     geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strata),
-#                    alpha=0.5, size = 3) +
-#     labs(x = xlab, y = "Prevalence Ratio") +
-#     geom_hline(yintercept = 1) +
-#     coord_cartesian(ylim=range(yticks)) +
-#     scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
-#     scale_fill_manual(values=rep(cols,4)) +
-#     scale_colour_manual(values=rep(cols,4)) +
-#     theme(strip.background = element_blank(),
-#       legend.position="none",
-#       strip.text.x = element_text(size=12),
-#       axis.text.x = element_text(size=12)) +
-#     facet_wrap(~lag,  scales = "fixed") +
-#     ggtitle(title)
-#   
-#   return(p)
-# }
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# #------------------------------
-# # Function to combine plots 
-# # into one figure
-# #------------------------------
-# 
-# trichy_panel_plot <- function(raind=raindf, H2Sd=H2Sdf, tempd=tempdf){
-#   
-# prain <- RR_plotfun(df=raind, xlab="Long-term rainfall strata", title="Heavy rainfall - diarrhea association",cols= raincol)
-# pH2S <- RR_plotfun(df=H2Sd, xlab="Long-term rainfall strata", title="Heavy rainfall - drinking water H2S association", cols= raincol)
-# ptemp <- RR_plotfun(df=tempd, xlab="Quartile contrast", title="Temperature - diarrhea association", cols= tempcol)
-#   
-#   p <- plot_grid(ptemp, prain, pH2S, labels = c("A", "B","C"), ncol = 1)
-#   p
-#   
-#  return(p) 
-# }
-
 
 
 #------------------------------

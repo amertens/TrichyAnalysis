@@ -1,7 +1,6 @@
 
 
 rm(list=ls())
-#sink("./PR.estimation.results.txt")
 if(!require("devtools")){
   install.packages("devtools", repos = "http://cran.us.r-project.org")
   devtools::install_github("hadley/devtools")
@@ -161,7 +160,11 @@ HR3_strat_adj
 # H2S
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-dH2S <- d %>% subset(., select=-Y) %>% filter(!is.na(H2S)) %>% rename(Y=H2S) %>% as.data.frame()
+#Number of households samples by round
+d %>% group_by(hhid, round) %>% slice(1) %>% mutate(hasSample=!is.na(H2S)) %>% group_by(round) %>% summarize(N=n(), mn=round(mean(hasSample)*100,1), perctot=round(sum(hasSample)/900*100,1))
+
+#Grab one obs per household per round to avoid double counting the samples from households with multiple children.
+dH2S <- d %>% group_by(hhid, round) %>% slice(1) %>% subset(., select=-Y) %>% filter(!is.na(H2S)) %>% rename(Y=H2S) %>% as.data.frame()
 
 #summary statistics
 summary_fun(dH2S, "tempQ1", "temp.ave7.lag1")
@@ -220,8 +223,6 @@ h2s.HR3<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14")
 h2s.HR3
 
 #stratified
-
-#NOTE: maybe change function to include interaction term and extract results from that
 h2s.HR1_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag1", strat="LT1_T")
 h2s.HR1_strat
 
@@ -343,4 +344,3 @@ df <- res_H2S_adj[,c(2,8)]
 df
 noquote(df[,2])
 
-sink()

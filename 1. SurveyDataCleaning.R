@@ -40,7 +40,7 @@ preW<-read_dta("trichy_long.dta") %>%
                   "pceduc","pclit","momage","momwork", # education
                   "rooms","totp","sc","kitchen","kitchvent", #house
                   "hwflies","hwwater","hwsoap","hwash","hwtow","hwsink", #handwashing station
-                  "hwcntwat","hwcntsoap", #Don't include count of HW behavior. Great missingness, and redundant with HW indicators
+                  #"hwcntwat","hwcntsoap", #Don't include count of HW behavior. Great missingness, and redundant with HW indicators
                   "hw1","hw2","hw3","hw4","hw5","hw6","hw7","hw8","hw9","hw10","hw11","hw12", #handwash w/ water
                   "hws1","hws2","hws3","hws4","hws5","hws6","hws7","hws8","hws9","hws10","hws11","hws12", #handwash w/soap
                   "boil_freq","boil_ready","boil_min","boil_present","wqsource","wqcol","wstore","wboil", #watertreat
@@ -51,7 +51,7 @@ preW<-read_dta("trichy_long.dta") %>%
                   "an_dogcat","stockliv","goatliv","chickliv","dogcatliv" #household animals
                   #"fecesliv","fecessm", #visible fecal contamination; don't include because may vary with rainfall/muddiness
                   #"chobs_hand","chobs_nails","chobs_face","chobs_cloth","chobs_nocloth","chobs_shoes", #Don't include because may vary with rainfall/muddiness
-                  #"qF1" #asset composite index
+                  #"qF1" #asset composite index: don't include because colinear with household assets
                   ))
 
 #Calculate village level open defecation
