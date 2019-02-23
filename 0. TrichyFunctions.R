@@ -128,31 +128,6 @@ trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL, Wvars=NULL, weathervar=N
 
 
 
-screen.lasso <- function(Y, X, family, alpha = 1, minscreen = 2, nfolds = 5, nlambda = 20){
-    require("glmnet")
-
-      if (!is.matrix(X)) {
-        X <- model.matrix(~-1 + ., X)
-    }
-  
-    fitCV <- glmnet::cv.glmnet(x = X, y = Y, lambda = NULL, type.measure = "deviance", 
-        nfolds = nfolds, family = "binomial", alpha = alpha, 
-        nlambda = nlambda)
-    whichVariable <- (as.numeric(coef(fitCV$glmnet.fit, s = fitCV$lambda.min))[-1] != 
-        0)
-    if (sum(whichVariable) < minscreen) {
-        warning("fewer than minscreen variables passed the glmnet screen, increased lambda to allow minscreen variables")
-        sumCoef <- apply(as.matrix(fitCV$glmnet.fit$beta), 2, 
-            function(x) sum((x != 0)))
-        newCut <- which.max(sumCoef >= minscreen)
-        whichVariable <- (as.matrix(fitCV$glmnet.fit$beta)[, 
-            newCut] != 0)
-    }
-    return(X[,whichVariable])
-}
-
-
-
 
 ####################
 #Plotting functions
@@ -355,20 +330,6 @@ plotdf_format <- function(
   return(df)
 }
   
-
-
-
-#Print tables to two decimals places
-
-tab_format <- function(d){
-  d$PR <- sprintf("%1.2f", d$PR)
-    d$ci.lb <- sprintf("%1.2f", d$ci.lb)
-  d$ci.ub <- sprintf("%1.2f", d$ci.ub)
-  
-  d$tab_format= paste0(d$PR," (", d$ci.lb,", ",d$ci.ub,")")
-
-  return(d)
-}
 
 
 

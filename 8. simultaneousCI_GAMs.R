@@ -11,6 +11,8 @@ library(SuperLearner)
     library(gam)
 
 
+#R code adapted from:
+#https://www.fromthebottomoftheheap.net/2016/12/15/simultaneous-interval-revisited/
 
 rmvn <- function(n, mu, sig) { ## MVN random deviates
     L <- mroot(sig)
@@ -67,8 +69,6 @@ GAM_simulCI<-function (Y, Age, W = NULL, id = NULL, SL.library = c( "SL.gam"), c
 
       
 Vb <- vcov(m)
-#https://stats.stackexchange.com/questions/110091/how-to-calculate-the-robust-standard-error-of-predicted-y-from-a-linear-regressi
-#Vb <- sandwichSE(fitd, m, fitd$id)
 newd <- seq(min(Age), max(Age), length = nrow(fitd))
 pred <- predict(m, data.frame(Age = newd),  se.fit = TRUE)
 se.fit <- pred$se.fit
@@ -140,5 +140,10 @@ fit.temp21.unadj$degrees.freedom[1]
 fit.rain7.unadj$degrees.freedom[1]
 fit.rain14.unadj$degrees.freedom[1]
 fit.rain21.unadj$degrees.freedom[1]
+
+
+
+
+
 
 

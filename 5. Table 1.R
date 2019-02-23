@@ -56,33 +56,29 @@ length(unique(d$hhid))
 dfull <- d
 d <- d %>% arrange(round)%>% group_by(individ) %>% slice(1)
 
-#   Received Sanitation Intervention	 (49.2)
+#   Received Sanitation Intervention	
 N_perc(d$wpi)
 
 
 # Child
-# Female	(49.4)
+# Female
 N_perc(d$sex)
 
-# Breastfeeding	(25.8)
+# Breastfeeding	
 N_perc(d$bfcur)
 N_perc(dfull$bfcur)
 
 # Maternal
 d <- dfull %>% arrange(round)%>% group_by(hhid) %>% slice(1)
 
-# Age	26.5 ± 
+# Age	
 mean_sd(d$momage)
 
-# Literate	(83.8)
+# Literate	
 cat("mom literate\n")
 N_perc(d$pclit)
 
-# No education	(13.0)
-# Primary School	(13.2)
-# Middle School	(27.2)
-# High school	(32.8)
-# Any secondary	(13.7)
+# Education
 N_perc(d$pceduc)
 
 
@@ -91,17 +87,17 @@ cat("mom works\n")
 N_perc(d$momwork)
 
 # Household	
-# Number of people in household	4.9 ±
+# Number of people in household	
 mean_sd(as.numeric(as.character(d$totp)))
 
-# Number of children in household	X.X ±
+# Number of children in household	
 d %>% group_by(hhid) %>% summarize(x=length(unique(individ))) %>% ungroup() %>% summarize(mean(x), sd(x))
 
-# Has electricity	(90.1)
+# Has electricity	(
 cat("electricity\n")
 N_perc(d$elec)
 
-# Has a dirt floor	(31.4)
+# Has a dirt floor
 cat("dirt floor\n")
 N_perc(d$soil)
 
@@ -109,7 +105,7 @@ N_perc(d$soil)
 cat("owns home\n")
 N_perc(d$ownhome)
 
-# Owns land	(94.3)
+# Owns land	
 cat("owns land\n")
 N_perc(d$land)
 
@@ -131,29 +127,21 @@ N_perc(d$dogcat)
 
 
 # Drinking water	
-# Private Tap	(30.0)
-# Public Tap	(62.9)
-# Private Well	2.9)
-# Public Well	(4.2)
 attributes(svy$primwat)$`label`
 N_perc(d$primwat)
 
 
-# Soap observed by handwashing station	(49.3)
+# Soap observed by handwashing station
 
 
 # Sanitation	
-# Daily defecating in open	(83.4)
+# Daily defecating in open	
 attributes(svy$sanOD)$`label`
 N_perc(d$sanOD)
 
-# Latrine	(41.0)
+# Latrine	
 attributes(svy$sanlat)$`label`
 N_perc(d$sanlat)
-
-# Latrine has soap	(47.1)
-# Smell of feces in home	(10.3)
-# Feces observed in home	(27.4)
 
 # Household assets
 attributes(svy$thatch)$`label`

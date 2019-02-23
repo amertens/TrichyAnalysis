@@ -1,6 +1,5 @@
 
 rm(list=ls())
-
 library(tidyverse)
 library(foreign)
 library(zoo)
@@ -41,7 +40,6 @@ sd(df$avetemp[df$month>9 | df$month<4], na.rm=T)
 mean(df$avetemp[df$month<10 & df$month>3], na.rm=T)
 sd(df$avetemp[df$month<10 & df$month>3], na.rm=T)
 
-#df$avetemp<-round(df$avetemp,0)
 
 # examine correlation between temperature and rainfall
 cor.test(df$avetemp, df$rain)
@@ -131,15 +129,13 @@ avetemp<-as.data.frame(avetemp)
 
 #Set to date format for merge
 avetemp$intdate<-as.Date(paste(avetemp$month,avetemp$day,avetemp$year, sep="/"),"%m/%d/%Y")
-#avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag7, temp.ave7.lag14, temp.ave7.lag21))
-avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag8, temp.ave7.lag15, temp.ave7.lag22)) %>%
-  rename(temp.ave7.lag7=temp.ave7.lag8, temp.ave7.lag14=temp.ave7.lag15, temp.ave7.lag21=temp.ave7.lag22)
+avetemp<-subset(avetemp, select=c(intdate, temp.ave7.lag1, temp.ave7.lag8, temp.ave7.lag15, temp.ave7.lag22))
 
 #Quartile temperatures
 avetemp$tempQ1<-cut(avetemp$temp.ave7.lag1, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-avetemp$tempQ7<-cut(avetemp$temp.ave7.lag7, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-avetemp$tempQ14<-cut(avetemp$temp.ave7.lag14, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
-avetemp$tempQ21<-cut(avetemp$temp.ave7.lag21, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ8<-cut(avetemp$temp.ave7.lag8, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ15<-cut(avetemp$temp.ave7.lag15, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
+avetemp$tempQ22<-cut(avetemp$temp.ave7.lag22, breaks = c(0,tempQ,999), labels=c("Q1","Q2","Q3","Q4"))
 
 
 
@@ -218,10 +214,6 @@ HeavyRainThres70<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1)
 HeavyRainThres90<-as.numeric(quantile(rain[rain[,4]!=0,4],probs = seq(0, 1, 0.1) ,na.rm=T)[10])
 
 
-#90th percentile of rainfall on any days
-HeavyRainThres90a<-as.numeric(quantile(rain,probs = seq(0, 1, 0.1) ,na.rm=T)[10])
-
-
 HeavyRain<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres,1,0))
 table(HeavyRain)
 
@@ -231,8 +223,6 @@ table(HeavyRain70)
 HeavyRain90<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres90,1,0))
 table(HeavyRain90)
 
-HeavyRain90a<-apply(rain[,-c(1:3)],2, function(x) ifelse(x>=HeavyRainThres90a,1,0))
-table(HeavyRain90a)
 
  
 
@@ -258,10 +248,7 @@ head(PriorHeavyRain,30)
 
 #Set to date format for merge
 PriorHeavyRain$intdate<-as.Date(paste(PriorHeavyRain$month,PriorHeavyRain$day,PriorHeavyRain$year, sep="/"),"%m/%d/%Y")
-PriorHeavyRain_sens<-subset(PriorHeavyRain, select=-c(year, month, day)) #Keep all lags for sensitivity analysis
-#PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag7,HeavyRain.lag14,HeavyRain.lag21)) %>%
-PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag8,HeavyRain.lag15,HeavyRain.lag22)) %>%
-  rename(HeavyRain.lag7=HeavyRain.lag8, HeavyRain.lag14=HeavyRain.lag15, HeavyRain.lag21=HeavyRain.lag22)
+PriorHeavyRain<-subset(PriorHeavyRain, select=c(intdate, HeavyRain.lag1, HeavyRain.lag8,HeavyRain.lag15,HeavyRain.lag22)) 
 
 
 #Sensitivity rain dataframes
@@ -288,18 +275,6 @@ colnames(PriorHeavyRain90)[4:ncol(PriorHeavyRain90)]<-PriorHeavyRain90.names
 PriorHeavyRain90<-as.data.frame(PriorHeavyRain90)
 PriorHeavyRain90$intdate<-as.Date(paste(PriorHeavyRain90$month,PriorHeavyRain90$day,PriorHeavyRain90$year, sep="/"),"%m/%d/%Y")
 PriorHeavyRain90<-subset(PriorHeavyRain90, select=-c(year, month, day))
-                            
-PriorHeavyRain90a<-matrix(data=NA,nrow=nrow(rain),ncol=28)
-PriorHeavyRain90a.names<-rep(NA, 28)
-for(i in 1:28){
-  PriorHeavyRain90a[,i]<-HeavyRain.window(i, 7, "rain", HeavyRain90a)
-  PriorHeavyRain90a.names[i]<- paste0("HeavyRain90a.lag",i)
-}
-PriorHeavyRain90a<-cbind(rain[,1:3],PriorHeavyRain90a)
-colnames(PriorHeavyRain90a)[4:ncol(PriorHeavyRain90a)]<-PriorHeavyRain90a.names
-PriorHeavyRain90a<-as.data.frame(PriorHeavyRain90a)
-PriorHeavyRain90a$intdate<-as.Date(paste(PriorHeavyRain90a$month,PriorHeavyRain90a$day,PriorHeavyRain90a$year, sep="/"),"%m/%d/%Y")
-PriorHeavyRain90a<-subset(PriorHeavyRain90a, select=-c(year, month, day))
 
 #--------------------------------------
 #Load and merge in survey data
@@ -320,7 +295,6 @@ dim(PriorHeavyRain)
 d<-merge(d,PriorHeavyRain, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,PriorHeavyRain70, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
-d<-merge(d,PriorHeavyRain90a, by="intdate", all.x = F, all.y = F)  
 d<-merge(d,LT, by="intdate", all.x = T, all.y = F) 
 dim(d)
 
@@ -328,32 +302,14 @@ colnames(d)
 
 
 
-#Make HR sensitivity analysis dataframe
-d_HRsens<-merge(survey, PriorHeavyRain_sens, by="intdate", all.x = F, all.y = F) 
-d_HRsens<-merge(d_HRsens, PriorHeavyRain70, by="intdate", all.x = F, all.y = F)  
-d_HRsens<-merge(d_HRsens, PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
-d_HRsens<-merge(d_HRsens, PriorHeavyRain90a, by="intdate", all.x = F, all.y = F)  
-d_HRsens<-merge(d_HRsens, LT, by="intdate", all.x = T, all.y = F) 
-dim(d_HRsens)
-
-
-save(d, d_HRsens, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
+save(d, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
 
 
 
 #Make weather dataset to merge with village H2S measurements
-
 weather <- merge(PriorHeavyRain, avetemp, by="intdate")
 weather <- merge(weather, LT, by="intdate")
 save(weather, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/prior_weather_dataset.Rdata")
 
 
 
-#Get descriptive statistics of the mean weather by quartile for the supplimentary tables
-d %>% group_by(tempQ7) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag7),2))
-d %>% group_by(tempQ14) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag14),2))
-d %>% group_by(tempQ21) %>% filter(!is.na(Y)) %>% summarize(round(mean(temp.ave7.lag21),2))
-
-d %>% group_by(tempQ1) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag1),2)) %>% as.data.frame()
-d %>% group_by(tempQ7) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag7),2)) %>% as.data.frame()
-d %>% group_by(tempQ14) %>% filter(!is.na(H2S)) %>% summarize(N=n(), pos=sum(H2S), Prev=round(mean(H2S)*100,2), MeanTemp=round(mean(temp.ave7.lag14),2)) %>% as.data.frame()

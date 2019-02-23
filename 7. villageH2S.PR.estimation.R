@@ -193,7 +193,7 @@ vilH2S_resdf_adj <- rbind(
 
 save(vilH2S_resdf, vilH2S_resdf_adj, file="C:/Users/andre/Dropbox/Trichy analysis/Results/villageh2s.HRmean-gamm-results.Rdata")
 
-
+#Print results in table format
 vilH2S_resdf$PR <- round(vilH2S_resdf$PR, 2)
 vilH2S_resdf$ci.lb <- round(vilH2S_resdf$ci.lb, 2)
 vilH2S_resdf$ci.ub <- round(vilH2S_resdf$ci.ub, 2)

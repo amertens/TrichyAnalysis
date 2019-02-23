@@ -118,9 +118,7 @@ HR2
 HR3<-trichy_gamm(d, A="HeavyRain.lag21")
 HR3
 
-#stratified
-
-#NOTE: maybe change function to include interaction term and extract results from that
+#stratified by 60-day rain trends
 HR1_strat<-trichy_gamm(d, A="HeavyRain.lag7", strat="LT8_T")
 HR1_strat
 
@@ -308,6 +306,9 @@ res_H2S_adj <- rbind(h2s.T1_adj, h2s.T2_adj, h2s.T3_adj,
 save(res_prim, res_prim_adj, res_H2S, res_H2S_adj,
      file="C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_plot_dfs.Rdata")
 
+
+
+#Print results
 res_prim$PR <- round(res_prim$PR, 2)
 res_prim$ci.lb <- round(res_prim$ci.lb, 2)
 res_prim$ci.ub <- round(res_prim$ci.ub, 2)

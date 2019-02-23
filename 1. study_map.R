@@ -97,11 +97,9 @@ p1<-ggplot() +
   theme(axis.text =element_blank(), strip.background= element_blank(), strip.text.x = element_text(size = 16),axis.ticks = element_blank(),
         legend.position="right",panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
-  #coord_cartesian(xlim=xrange, ylim=yrange)
   coord_fixed(1, xlim=xrange, ylim=yrange) 
 
 
-#p1 <- p1 + scale_fill_gradient(limits = c(100,1100), low = "#EBEB86", high = "#0048E3", guide_colourbar(title = "Total seasonal\nrainfall (mm)")) 
 
 #add in airport
 p1 <- p1 + geom_point(aes(x = long, y = lat),pch=13,  data = airport, size=5) 
@@ -123,24 +121,13 @@ p2<-ggplot()+geom_polygon(data=india, aes(long,lat,group=group),colour="grey10",
 
 #Save map
 setwd("C:/Users/andre/Dropbox/Trichy analysis/Figures and Tables/")
-# png(file="Figure1.png",w=2000,h=2000, res=300)
-# 
-# grid.newpage()
-# v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
-# #v2<-viewport(width = 0.3, height = 0.3, x = 0.7127, y = 0.19425) #plot area for the inset map
-# v2<-viewport(width = 0.35, height = 0.35, x = 0.2, y = 0.3) #plot area for the inset map
-# print(p1,vp=v1) 
-# print(p2,vp=v2)
-# dev.off()
 
 
-#pdf(file="Figure1.pdf",width=10.4,height=8.32)
+
 pdf(file="Figure1.pdf",width=6,height=4.8)
 
 grid.newpage()
 v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
-#v2<-viewport(width = 0.3, height = 0.3, x = 0.7127, y = 0.19425) #plot area for the inset map
-#v2<-viewport(width = 0.4, height = 0.4, x = 0.195, y = 0.244, clip="off") #plot area for the inset map
 v2<-viewport(width = 0.4, height = 0.4, x = 0.295, y = 0.239, clip="off") #plot area for the inset map
 print(p1,vp=v1) 
 print(p2,vp=v2)
