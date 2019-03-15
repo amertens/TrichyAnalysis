@@ -129,9 +129,13 @@ W<-subset(preW, select= -c(age,momage, villOD))
 
 table(is.na(W))
 
+#Create covariate dataset with missingness for the complete case analysis
+Wcc <- W
+
 #Add missing category to categorical variables 
 for(i in 1:ncol(W)){
   W[,i]<-factor(W[,i])
+  Wcc[,i]<-factor(Wcc[,i])
   if(length(is.na(W[,i]))>0){
     W[,i]<-addNA(W[,i])
     levels(W[,i])[length(levels(W[,i]))]<-"miss"
@@ -139,8 +143,10 @@ for(i in 1:ncol(W)){
 }
 
 table(is.na(W))
+table(is.na(Wcc))
 
 #Median impute continious variables (after adding missinginess indicator)
+preWcontcc <- preWcont #Save data with missiness for CC analysis
 
 #Add in missingess indicator variables for covariates with missingness
   #Create dataframe for missingness indicators
@@ -154,12 +160,14 @@ table(is.na(W))
   
 #Add back in the continious variables
 preW <- cbind(W,preWcont,miss.ind)
+preWcc <- cbind(Wcc,preWcontcc)
 table(is.na(preW))
-head(preW)
+table(is.na(preWcc))
 
 
 #drop empty levels
 preW<-droplevels(preW)
+preWcc<-droplevels(preWcc)
 
 
 
@@ -174,10 +182,16 @@ dim(preW)
   preW = predict(preproc, preW)
 dim(preW)
 
+dim(preWcc)
+preproc = caret::preProcess(preWcc, method = c("nzv"))
+preWcc = predict(preproc, preWcc)
+dim(preWcc)
+
 
 
 #Add covariates into dataframe with the outcome
 df<-cbind(svy,preW)
+dfcc<-cbind(svy,preWcc)
 glimpse(df)
 
 names.svy<-colnames(svy)
@@ -192,6 +206,7 @@ names.W<-colnames(W)
 # Expand out factors into indicators 
 dim(df)
 df<-df[,-5] #remove duplicate "round" variable
+dfcc<-dfcc[,-5] 
 head(df)
 
 Y<-df$diar7d
@@ -206,6 +221,7 @@ hhid<-df$hhid  #household id for household level summary statistics
 
 intdate<-df$intdate
 Wfac<-subset(df,select= -c(hhid,intdate,bdate,mdiar7d, diar2d, diar7d, diar14d, hcgi7d, diardays, h2s ))
+Wfac.cc<-subset(dfcc,select= -c(hhid,intdate,bdate,mdiar7d, diar2d, diar7d, diar14d, hcgi7d, diardays, h2s ))
 colnames(Wfac)
 
 H2S<-df$h2s
@@ -217,6 +233,7 @@ table(is.na(Wfac))
 Wvars <- colnames(Wfac)
 Wvars <- Wvars[-c(1:2,4:5)] #drop ID variables from adjustment covariates
 survey<-cbind(intdate,Y,id,hhid,H2S,Wfac)
+surveycc<-cbind(intdate,Y,id,hhid,H2S,Wfac.cc)
 
 #check Wvars
 for(i in 1:ncol(Wfac)){
@@ -229,8 +246,9 @@ for(i in 1:ncol(Wfac)){
 }
 
 
-save(df,names.svy,names.W,
-     file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/bl_covariates.Rdata")
 
 save(survey, Wvars, 
      file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
+
+save(surveycc, Wvars, 
+     file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset_CC.Rdata")

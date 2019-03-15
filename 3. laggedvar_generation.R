@@ -281,6 +281,7 @@ PriorHeavyRain90<-subset(PriorHeavyRain90, select=-c(year, month, day))
 #--------------------------------------
 
 load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset.Rdata")
+load("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/survey_dataset_CC.Rdata")
 
 #merge survey and temp
 dim(survey)
@@ -288,6 +289,9 @@ dim(avetemp)
 d<-merge(survey, avetemp, by="intdate", all.x = F, all.y = F) 
 dim(d)
 colnames(d)
+
+dcc<-merge(surveycc, avetemp, by="intdate", all.x = F, all.y = F) 
+dim(dcc)
 
 #merge suvery and rain
 dim(survey)
@@ -300,9 +304,16 @@ dim(d)
 
 colnames(d)
 
+dcc<-merge(dcc,PriorHeavyRain, by="intdate", all.x = F, all.y = F)  
+dcc<-merge(dcc,PriorHeavyRain70, by="intdate", all.x = F, all.y = F)  
+dcc<-merge(dcc,PriorHeavyRain90, by="intdate", all.x = F, all.y = F)  
+dcc<-merge(dcc,LT, by="intdate", all.x = T, all.y = F) 
+dim(dcc)
+
 
 
 save(d, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets.Rdata")
+save(dcc, tempQ, LT, Wvars, file="C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data/analysis_datasets_CC.Rdata")
 
 
 

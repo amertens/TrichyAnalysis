@@ -88,8 +88,10 @@ gammAR1_adj <- function(data, Avar, Yvar="Diarrhea", strat=NULL, weathervar, Wva
   }else{
     resdf$strat=strat
   }
-  return(resdf)
+  return(list(resdf=resdf, cov=Wscreen, Avar=Avar, Yvar=Yvar, strat=strat))
 }
+
+
 
 trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL, Wvars=NULL, weathervar=NULL){
   set.seed(12345)
@@ -108,23 +110,107 @@ trichy_gamm <- function(d, A, Y="Diarrhea", strat=NULL, Wvars=NULL, weathervar=N
       dsub= d[V==levels(V)[i],]
           if(is.null(Wvars)){
             res_strat <- gammAR1(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i])
+            res<-rbind(res, res_strat)
           }else{
             res_strat<-gammAR1_adj(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i], weathervar=weathervar, Wvars=Wvars)
+            res<-c(res, res_strat)
+            names(res)[i] <- levels(V)[i]
           }
-      
-      res<-rbind(res, res_strat)
     }
     
   }
   if(is.null(Wvars)){
     res$adjusted="N" 
   }else{
-    res$adjusted="Y" 
+    res$resdf$adjusted="Y" 
   }
   return(res)
 }
 
 
+
+
+
+
+#Complete case sensitivity analysis function
+
+trichy_gammCC <- function(d, A, Y="Diarrhea", strat=NULL, adj_set, Wvars, weathervar=NULL){
+  set.seed(12345)
+  if(is.null(strat)){
+      res<-gammAR1_adjCC(data=d, Avar=A, Yvar=Y, strat=NULL, adj_set=adj_set, weathervar=weathervar, Wvars=Wvars)
+  }else{
+    V= d[,strat]
+    d<-d[!is.na(V),]
+    V<-factor(V[!is.na(V)])
+    res<-NULL
+    for(i in 1:length(unique(V))){
+      dsub= d[V==levels(V)[i],]
+        res_strat<-gammAR1_adjCC(data=dsub, Avar=A, Yvar=Y, strat=levels(V)[i], adj_set=adj_set[[i]], weathervar=weathervar, Wvars=Wvars)
+        res<-c(res, res_strat)
+        names(res)[i] <- levels(V)[i]
+    }
+    
+  }
+  return(res)
+}
+
+
+
+#Make GAMM analysis function for complete case sensitivity analysis function
+gammAR1_adjCC <- function(data, Avar, Yvar="Diarrhea", strat=NULL, adj_set, weathervar, Wvars){
+  set.seed(12345)
+  df <-data %>% subset(., select=c("Y","stdywk", "individ", "vilid",Avar, weathervar, Wvars))
+  colnames(df)[colnames(df)==Avar] <- "A"
+  colnames(df)[colnames(df)==weathervar] <- "Weather"
+  
+  df <-df[!is.na(df$A),]
+  nlevels <- length(unique(df$A))
+  
+  Wall<-subset(df, select=c("Weather", Wvars))
+  Wall<-droplevels(Wall)
+
+  
+  d.W<-subset(Wall, select=adj_set)
+  
+  Ws <- colnames(d.W)
+  dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
+  
+  
+  frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
+  
+  m<-NULL
+  try(m <- gamm(formula = as.formula(frm), data=dm, random =  list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=binomial(link='log')))
+  if(is.null(m)){try(m <- gamm(formula = as.formula(frm), data=dm, random =  list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log')))}
+  if(is.null(m)){
+    #If error from "Singularity in backsolve", try dropping zero-variance covariates:
+    d.W<-design_matrix(d.W)
+    #remove near zero variance columns
+    preproc = caret::preProcess(d.W, method = c("zv", "nzv"))
+    d.W = predict(preproc, d.W)
+    d.W<-droplevels(d.W)
+    
+    Ws <- colnames(d.W)
+    dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
+    frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
+    
+    m <- gamm(formula = as.formula(frm), data=dm, random = list(vilid=~1), correlation = corAR1(form = ~ stdywk|individ), family=poisson(link='log'))
+  }
+  
+  
+  res <- summary(m$gam)
+  
+  resdf <- data.frame(outcome=rep(Yvar,nlevels-1), exposure=rep(Avar,nlevels-1), 
+                      PR=exp(res$p.coeff)[2:nlevels], 
+                      ci.lb=exp(res$p.coeff[2:nlevels] - res$se[2:nlevels] * 1.96), 
+                      ci.ub=exp(res$p.coeff[2:nlevels] + res$se[2:nlevels] * 1.96))
+  print(resdf)
+  if(is.null(strat)){
+    resdf$strat="Unstratified"
+  }else{
+    resdf$strat=strat
+  }
+  return(list(resdf=resdf, cov=adj_set, Avar=Avar, Yvar=Yvar, strat=strat))
+}
 
 
 

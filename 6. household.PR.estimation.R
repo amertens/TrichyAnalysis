@@ -12,18 +12,19 @@ if(!require("SuperLearner")){install.packages("SuperLearner", repos = "http://cr
 if(!require("tmle")){install.packages("tmle", repos = "http://cran.us.r-project.org"); library("tmle")}
 if(!require("caret")){install.packages("caret", repos = "http://cran.us.r-project.org"); library("caret")}
 if(!require("zoo")){install.packages("zoo", repos = "http://cran.us.r-project.org"); library("zoo")}
-library(mgcv)
+if(!require("mgcv")){install.packages("mgcv", repos = "http://cran.us.r-project.org"); library("mgcv")}
 
 
 source("C:/Users/andre/Documents/TrichyAnalysis/0. TrichyFunctions.R")
 
 try(setwd("C:/Users/andre/Dropbox/Trichy analysis/Data/Cleaned data"))
+#sink("./PR.results.txt")
 
 load("analysis_datasets.Rdata")
 
 #Check missing weather data
-table(is.na(d$tempQ21))
-table(is.na(d$HeavyRain.lag21))
+table(is.na(d$tempQ22))
+table(is.na(d$HeavyRain.lag22))
 table(is.na(d$LT8_T))
 table(is.na(d$LT15_T))
 table(is.na(d$LT22_T))
@@ -67,17 +68,17 @@ summary_fun <- function(d, A, weather, strat=NULL,strat_weathervar=NULL){
     print(res2)
   }
 }
-summary_fun(d, "tempQ7", "temp.ave7.lag7")
-summary_fun(d, "tempQ14", "temp.ave7.lag14")
-summary_fun(d, "tempQ21", "temp.ave7.lag21")
+summary_fun(d, "tempQ8", "temp.ave7.lag8")
+summary_fun(d, "tempQ15", "temp.ave7.lag15")
+summary_fun(d, "tempQ22", "temp.ave7.lag22")
 
-summary_fun(d, "HeavyRain.lag7","rain.ave7.lag8")
-summary_fun(d, "HeavyRain.lag14","rain.ave7.lag15")
-summary_fun(d, "HeavyRain.lag21","rain.ave7.lag22")
+summary_fun(d, "HeavyRain.lag8","rain.ave7.lag8")
+summary_fun(d, "HeavyRain.lag15","rain.ave7.lag15")
+summary_fun(d, "HeavyRain.lag22","rain.ave7.lag22")
 
-summary_fun(d, "HeavyRain.lag7","rain.ave7.lag8", "LT8_T", "LT8")
-summary_fun(d, "HeavyRain.lag14","rain.ave7.lag15", "LT15_T", "LT15")
-summary_fun(d, "HeavyRain.lag21","rain.ave7.lag22", "LT22_T", "LT22")
+summary_fun(d, "HeavyRain.lag8","rain.ave7.lag8", "LT8_T", "LT8")
+summary_fun(d, "HeavyRain.lag15","rain.ave7.lag15", "LT15_T", "LT15")
+summary_fun(d, "HeavyRain.lag22","rain.ave7.lag22", "LT22_T", "LT22")
 
 
 #---------------------------
@@ -85,23 +86,23 @@ summary_fun(d, "HeavyRain.lag21","rain.ave7.lag22", "LT22_T", "LT22")
 #---------------------------
 
 #Unadjusted
-T1<-trichy_gamm(d, A="tempQ7")
+T1<-trichy_gamm(d, A="tempQ8")
 T1
 
-T2<-trichy_gamm(d, A="tempQ14")
+T2<-trichy_gamm(d, A="tempQ15")
 T2
 
-T3<-trichy_gamm(d, A="tempQ21")
+T3<-trichy_gamm(d, A="tempQ22")
 T3
 
 #Adjusted
-T1_adj<-trichy_gamm(d, A="tempQ7", weathervar="rain.ave7.lag8", Wvars = Wvars)
+T1_adj<-trichy_gamm(d, A="tempQ8", weathervar="rain.ave7.lag8", Wvars = Wvars)
 T1_adj
 
-T2_adj<-trichy_gamm(d, A="tempQ14", weathervar="rain.ave7.lag15", Wvars = Wvars)
+T2_adj<-trichy_gamm(d, A="tempQ15", weathervar="rain.ave7.lag15", Wvars = Wvars)
 T2_adj
 
-T3_adj<-trichy_gamm(d, A="tempQ21", weathervar="rain.ave7.lag22", Wvars = Wvars)
+T3_adj<-trichy_gamm(d, A="tempQ22", weathervar="rain.ave7.lag22", Wvars = Wvars)
 T3_adj
 
 #---------------------------
@@ -109,50 +110,57 @@ T3_adj
 #---------------------------
 
 #Unadjusted
-HR1<-trichy_gamm(d, A="HeavyRain.lag7")
+HR1<-trichy_gamm(d, A="HeavyRain.lag8")
 HR1
 
-HR2<-trichy_gamm(d, A="HeavyRain.lag14")
+HR2<-trichy_gamm(d, A="HeavyRain.lag15")
 HR2
 
-HR3<-trichy_gamm(d, A="HeavyRain.lag21")
+HR3<-trichy_gamm(d, A="HeavyRain.lag22")
 HR3
 
 #stratified by 60-day rain trends
-HR1_strat<-trichy_gamm(d, A="HeavyRain.lag7", strat="LT8_T")
+HR1_strat<-trichy_gamm(d, A="HeavyRain.lag8", strat="LT8_T")
 HR1_strat
 
-HR2_strat<-trichy_gamm(d, A="HeavyRain.lag14", strat="LT15_T")
+HR2_strat<-trichy_gamm(d, A="HeavyRain.lag15", strat="LT15_T")
 HR2_strat
 
-HR3_strat<-trichy_gamm(d, A="HeavyRain.lag21", strat="LT22_T")
+HR3_strat<-trichy_gamm(d, A="HeavyRain.lag22", strat="LT22_T")
 HR3_strat
 
 
 
 #Adjusted
-HR1_adj<-trichy_gamm(d, A="HeavyRain.lag7", weathervar="temp.ave7.lag7", Wvars = Wvars)
+HR1_adj<-trichy_gamm(d, A="HeavyRain.lag8", weathervar="temp.ave7.lag8", Wvars = Wvars)
 HR1_adj
 
-HR2_adj<-trichy_gamm(d, A="HeavyRain.lag14", weathervar="temp.ave7.lag14", Wvars = Wvars)
+HR2_adj<-trichy_gamm(d, A="HeavyRain.lag15", weathervar="temp.ave7.lag15", Wvars = Wvars)
 HR2_adj
 
-HR3_adj<-trichy_gamm(d, A="HeavyRain.lag21", weathervar="temp.ave7.lag21", Wvars = Wvars)
+HR3_adj<-trichy_gamm(d, A="HeavyRain.lag22", weathervar="temp.ave7.lag22", Wvars = Wvars)
 HR3_adj
 
 #stratified
-HR1_strat_adj<-trichy_gamm(d, A="HeavyRain.lag7", strat="LT8_T", weathervar="temp.ave7.lag7", Wvars = Wvars)
+HR1_strat_adj<-trichy_gamm(d, A="HeavyRain.lag8", strat="LT8_T", weathervar="temp.ave7.lag8", Wvars = Wvars)
 HR1_strat_adj
 
-HR2_strat_adj<-trichy_gamm(d, A="HeavyRain.lag14", strat="LT15_T", weathervar="temp.ave7.lag14", Wvars = Wvars)
+HR2_strat_adj<-trichy_gamm(d, A="HeavyRain.lag15", strat="LT15_T", weathervar="temp.ave7.lag15", Wvars = Wvars)
 HR2_strat_adj
 
-HR3_strat_adj<-trichy_gamm(d, A="HeavyRain.lag21", strat="LT22_T", weathervar="temp.ave7.lag21", Wvars = Wvars)
+HR3_strat_adj<-trichy_gamm(d, A="HeavyRain.lag22", strat="LT22_T", weathervar="temp.ave7.lag22", Wvars = Wvars)
 HR3_strat_adj
 
 
-
-
+# age       bfcur     Weather   hwtow     thatch    kitchvent wpi       tv    
+# table(is.na(d$age))
+# table(is.na(d$bfcur))
+# table(is.na(d$temp.ave7.lag15))
+# table(is.na(d$hwtow))
+# table(is.na(d$thatch))
+# table(is.na(d$kitchvent))
+# table(is.na(d$wpi))
+# table(is.na(d$tv))
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 # H2S
@@ -166,16 +174,16 @@ dH2S <- d %>% group_by(hhid, round) %>% slice(1) %>% subset(., select=-Y) %>% fi
 
 #summary statistics
 summary_fun(dH2S, "tempQ1", "temp.ave7.lag1")
-summary_fun(dH2S, "tempQ7", "temp.ave7.lag7")
-summary_fun(dH2S, "tempQ14", "temp.ave7.lag14")
+summary_fun(dH2S, "tempQ8", "temp.ave7.lag8")
+summary_fun(dH2S, "tempQ15", "temp.ave7.lag15")
 
 summary_fun(dH2S, "HeavyRain.lag1","rain.ave7.lag1")
-summary_fun(dH2S, "HeavyRain.lag7","rain.ave7.lag8")
-summary_fun(dH2S, "HeavyRain.lag14","rain.ave7.lag15")
+summary_fun(dH2S, "HeavyRain.lag8","rain.ave7.lag8")
+summary_fun(dH2S, "HeavyRain.lag15","rain.ave7.lag15")
 
 summary_fun(dH2S, "HeavyRain.lag1","rain.ave7.lag1", "LT1_T", "LT1")
-summary_fun(dH2S, "HeavyRain.lag7","rain.ave7.lag8", "LT8_T", "LT8")
-summary_fun(dH2S, "HeavyRain.lag14","rain.ave7.lag15", "LT15_T", "LT15")
+summary_fun(dH2S, "HeavyRain.lag8","rain.ave7.lag8", "LT8_T", "LT8")
+summary_fun(dH2S, "HeavyRain.lag15","rain.ave7.lag15", "LT15_T", "LT15")
 
 #Prevalence by sampling round
 dH2S %>% group_by(round, vilid) %>% summarise(mn=mean(Y)) %>% ungroup %>% summarise(min(mn), mean(mn)) 
@@ -189,20 +197,20 @@ dH2S %>% group_by(round) %>% summarise(mn=mean(Y)) %>% ungroup %>% summarise(min
 h2s.T1<-trichy_gamm(dH2S, Y="H2S", A="tempQ1")
 h2s.T1
 
-h2s.T2<-trichy_gamm(dH2S, Y="H2S", A="tempQ7")
+h2s.T2<-trichy_gamm(dH2S, Y="H2S", A="tempQ8")
 h2s.T2
 
-h2s.T3<-trichy_gamm(dH2S, Y="H2S", A="tempQ14")
+h2s.T3<-trichy_gamm(dH2S, Y="H2S", A="tempQ15")
 h2s.T3
 
 #Adjusted
 h2s.T1_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ1", weathervar="rain.ave7.lag1",  Wvars = Wvars)
 h2s.T1_adj
 
-h2s.T2_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ7", weathervar="rain.ave7.lag8", Wvars = Wvars)
+h2s.T2_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ8", weathervar="rain.ave7.lag8", Wvars = Wvars)
 h2s.T2_adj
 
-h2s.T3_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ14", weathervar="rain.ave7.lag15", Wvars = Wvars)
+h2s.T3_adj<-trichy_gamm(dH2S, Y="H2S", A="tempQ15", weathervar="rain.ave7.lag15", Wvars = Wvars)
 h2s.T3_adj
 
 
@@ -214,20 +222,20 @@ h2s.T3_adj
 h2s.HR1<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag1")
 h2s.HR1
 
-h2s.HR2<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag7")
+h2s.HR2<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag8")
 h2s.HR2
 
-h2s.HR3<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14")
+h2s.HR3<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag15")
 h2s.HR3
 
 #stratified
 h2s.HR1_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag1", strat="LT1_T")
 h2s.HR1_strat
 
-h2s.HR2_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag7", strat="LT8_T")
+h2s.HR2_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag8", strat="LT8_T")
 h2s.HR2_strat
 
-h2s.HR3_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14", strat="LT15_T")
+h2s.HR3_strat<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag15", strat="LT15_T")
 h2s.HR3_strat
 
 
@@ -236,10 +244,10 @@ h2s.HR3_strat
 h2s.HR1_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag1", weathervar="temp.ave7.lag1", Wvars = Wvars)
 h2s.HR1_adj
 
-h2s.HR2_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag7", weathervar="temp.ave7.lag7", Wvars = Wvars)
+h2s.HR2_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag8", weathervar="temp.ave7.lag8", Wvars = Wvars)
 h2s.HR2_adj
 
-h2s.HR3_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14", weathervar="temp.ave7.lag14", Wvars = Wvars)
+h2s.HR3_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag15", weathervar="temp.ave7.lag15", Wvars = Wvars)
 h2s.HR3_adj
 
 #stratified
@@ -248,10 +256,10 @@ h2s.HR1_strat_adj <- h2s.HR2_strat_adj <- h2s.HR3_strat_adj <- NULL
 h2s.HR1_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag1", strat="LT1_T", weathervar="temp.ave7.lag1", Wvars = Wvars)
 h2s.HR1_strat_adj
 
-h2s.HR2_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag7", strat="LT8_T", weathervar="temp.ave7.lag7", Wvars = Wvars)
+h2s.HR2_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag8", strat="LT8_T", weathervar="temp.ave7.lag8", Wvars = Wvars)
 h2s.HR2_strat_adj
 
-h2s.HR3_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag14", strat="LT15_T", weathervar="temp.ave7.lag14", Wvars = Wvars)
+h2s.HR3_strat_adj<-trichy_gamm(dH2S, Y="H2S", A="HeavyRain.lag15", strat="LT15_T", weathervar="temp.ave7.lag15", Wvars = Wvars)
 h2s.HR3_strat_adj
 
 
@@ -286,18 +294,18 @@ ls()
 res_prim <- rbind(T1, T2, T3, HR1, HR2, HR3, HR1_strat, HR2_strat, HR3_strat)
 
 #primary adjusted
-res_prim_adj <- rbind(T1_adj, T2_adj, T3_adj, 
-                      HR1_adj, HR2_adj, HR3_adj,
-                      HR1_strat_adj, HR2_strat_adj, HR3_strat_adj)
+res_prim_adj <- rbind(T1_adj$`resdf`, T2_adj$`resdf`, T3_adj$`resdf`, 
+                      HR1_adj$`resdf`, HR2_adj$`resdf`, HR3_adj$`resdf`,
+                      HR1_strat_adj$`resdf`, HR2_strat_adj$`resdf`, HR3_strat_adj$`resdf`)
 
 #h2s
 res_H2S <- rbind( h2s.T1, h2s.T2, h2s.T3,
  h2s.HR1, h2s.HR2, h2s.HR3,
  h2s.HR1_strat, h2s.HR2_strat, h2s.HR3_strat)
 
-res_H2S_adj <- rbind(h2s.T1_adj, h2s.T2_adj, h2s.T3_adj,
-                     h2s.HR1_adj, h2s.HR2_adj, h2s.HR3_adj,
- h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj)
+res_H2S_adj <- rbind(h2s.T1_adj$`resdf`, h2s.T2_adj$`resdf`, h2s.T3_adj$`resdf`,
+                     h2s.HR1_adj$`resdf`, h2s.HR2_adj$`resdf`, h2s.HR3_adj$`resdf`,
+ h2s.HR1_strat_adj$`resdf`, h2s.HR2_strat_adj$`resdf`, h2s.HR3_strat_adj$`resdf`)
 
 
 
@@ -345,3 +353,64 @@ df <- res_H2S_adj[,c(2,8)]
 df
 noquote(df[,2])
 
+
+
+#Print covariates selected
+res_prim_adj <- list(T1_adj$cov, T2_adj$cov, T3_adj$cov, 
+                      HR1_adj$cov, HR2_adj$cov, HR3_adj$cov,
+                      HR1_strat_adj[[2]],
+                      HR1_strat_adj[[7]],
+                      HR1_strat_adj[[12]],
+                     HR2_strat_adj[[2]],
+                     HR2_strat_adj[[7]],
+                     HR2_strat_adj[[12]],
+                     HR3_strat_adj[[2]],
+                     HR3_strat_adj[[7]],
+                     HR3_strat_adj[[12]],
+                     h2s.T1_adj$cov,
+                     h2s.T2_adj$cov,
+                     h2s.T3_adj$cov,
+                     h2s.HR1_adj$cov,
+                     h2s.HR2_adj$cov,
+                     h2s.HR2_adj$cov,
+                     h2s.HR1_strat_adj[[2]],
+                     h2s.HR1_strat_adj[[7]],
+                     h2s.HR1_strat_adj[[12]],
+                     h2s.HR2_strat_adj[[2]],
+                     h2s.HR2_strat_adj[[7]],
+                     h2s.HR2_strat_adj[[12]],
+                     h2s.HR3_strat_adj[[2]],
+                     h2s.HR3_strat_adj[[7]],
+                     h2s.HR3_strat_adj[[12]]
+                     )
+
+
+
+
+
+names(res_prim_adj) <- c("T1_adj", "T2_adj", "T3_adj", 
+                         "HR1_adj", "HR2_adj", "HR3_adj",
+                         "HR1_strat_adjT1",
+                         "HR1_strat_adjT2",
+                         "HR1_strat_adjT3",
+                         "HR2_strat_adjT1",
+                         "HR2_strat_adjT2",
+                         "HR2_strat_adjT3",
+                         "HR3_strat_adjT1",
+                         "HR3_strat_adjT2",
+                         "HR3_strat_adjT3",
+                         "h2s.T1_adj", "h2s.T2_adj", "h2s.T3_adj", 
+                         "h2s.HR1_adj", "h2s.HR2_adj", "h2s.HR3_adj",
+                         "h2s.HR1_strat_adjT1",
+                         "h2s.HR1_strat_adjT2",
+                         "h2s.HR1_strat_adjT3",
+                         "h2s.HR2_strat_adjT1",
+                         "h2s.HR2_strat_adjT2",
+                         "h2s.HR2_strat_adjT3",
+                         "h2s.HR3_strat_adjT1",
+                         "h2s.HR3_strat_adjT2",
+                         "h2s.HR3_strat_adjT3")
+
+#Save adjustment set for CC analysis
+save(res_prim_adj, file="C:/Users/andre/Dropbox/Trichy analysis/Results/adjustment_sets.Rdata")
+sink()
