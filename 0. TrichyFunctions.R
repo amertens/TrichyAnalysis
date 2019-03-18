@@ -174,6 +174,10 @@ gammAR1_adjCC <- function(data, Avar, Yvar="Diarrhea", strat=NULL, adj_set, weat
   
   Ws <- colnames(d.W)
   dm <- data.frame(Y=df$Y, A=df$A, stdywk=df$stdywk, vilid=df$vilid, individ=df$individ, d.W)
+  Nfull <- nrow(dm)
+  dm <- dm[complete.cases(dm),]
+  N <- nrow(dm)
+  cat(Nfull-N, " observations dropped\n")
   
   
   frm <- paste0("Y ~ A + ", paste0(colnames(dm)[-c(1:5)], collapse = " + "))
@@ -209,7 +213,7 @@ gammAR1_adjCC <- function(data, Avar, Yvar="Diarrhea", strat=NULL, adj_set, weat
   }else{
     resdf$strat=strat
   }
-  return(list(resdf=resdf, cov=adj_set, Avar=Avar, Yvar=Yvar, strat=strat))
+  return(list(resdf=resdf, cov=adj_set, Avar=Avar, Yvar=Yvar, strat=strat, N=N, Ndropped=Nfull-N))
 }
 
 

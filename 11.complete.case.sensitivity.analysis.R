@@ -110,7 +110,6 @@ h2s.T2_adj
 h2s.T3_adj<-trichy_gammCC(dH2S, Y="H2S", A="tempQ15", adj_set=res_prim_adj$h2s.T3_adj , weathervar="rain.ave7.lag15", Wvars = Wvars)
 h2s.T3_adj
 
-
 #---------------------------
 #Rainfall
 #---------------------------
@@ -162,17 +161,44 @@ ls()
 #primary 
 res_prim_adj <- rbind(T1_adj$`resdf`, T2_adj$`resdf`, T3_adj$`resdf`, 
                       HR1_adj$`resdf`, HR2_adj$`resdf`, HR3_adj$`resdf`,
-                      HR1_strat_adj[[1]],HR1_strat_adj[[6]],HR1_strat_adj[[11]],
-                      HR2_strat_adj[[1]],HR2_strat_adj[[6]],HR2_strat_adj[[11]],
-                      HR3_strat_adj[[1]],HR3_strat_adj[[6]],HR3_strat_adj[[11]])
+                      HR1_strat_adj[[1]],HR1_strat_adj[[8]],HR1_strat_adj[[15]],
+                      HR2_strat_adj[[1]],HR2_strat_adj[[8]],HR2_strat_adj[[15]],
+                      HR3_strat_adj[[1]],HR3_strat_adj[[8]],HR3_strat_adj[[15]])
 
 #h2s
 res_H2S_adj <- rbind(h2s.T1_adj$`resdf`, h2s.T2_adj$`resdf`, h2s.T3_adj$`resdf`,
                      h2s.HR1_adj$`resdf`, h2s.HR2_adj$`resdf`, h2s.HR3_adj$`resdf`,
-                     h2s.HR1_strat_adj[[1]],h2s.HR1_strat_adj[[6]],h2s.HR1_strat_adj[[11]],
-                     h2s.HR2_strat_adj[[1]],h2s.HR2_strat_adj[[6]],h2s.HR2_strat_adj[[11]],
-                     h2s.HR3_strat_adj[[1]],h2s.HR3_strat_adj[[6]],h2s.HR3_strat_adj[[11]])
+                     h2s.HR1_strat_adj[[1]],h2s.HR1_strat_adj[[8]],h2s.HR1_strat_adj[[15]],
+                     h2s.HR2_strat_adj[[1]],h2s.HR2_strat_adj[[8]],h2s.HR2_strat_adj[[15]],
+                     h2s.HR3_strat_adj[[1]],h2s.HR3_strat_adj[[8]],h2s.HR3_strat_adj[[15]])
 
+#N's
+#primary 
+res_prim_N <- rbind(T1_adj$N, T2_adj$N, T3_adj$N, 
+                      HR1_adj$N, HR2_adj$N, HR3_adj$N,
+                      HR1_strat_adj[[6]],HR1_strat_adj[[13]],HR1_strat_adj[[20]],
+                      HR2_strat_adj[[6]],HR2_strat_adj[[13]],HR2_strat_adj[[20]],
+                      HR3_strat_adj[[6]],HR3_strat_adj[[13]],HR3_strat_adj[[20]])
+res_prim_N
+res_H2S_N <- rbind(h2s.T1_adj$N, h2s.T2_adj$N, h2s.T3_adj$N,
+                     h2s.HR1_adj$N, h2s.HR2_adj$N, h2s.HR3_adj$N,
+                     h2s.HR1_strat_adj[[6]],h2s.HR1_strat_adj[[13]],h2s.HR1_strat_adj[[20]],
+                     h2s.HR2_strat_adj[[6]],h2s.HR2_strat_adj[[13]],h2s.HR2_strat_adj[[20]],
+                     h2s.HR3_strat_adj[[6]],h2s.HR3_strat_adj[[13]],h2s.HR3_strat_adj[[20]])
+res_H2S_N
+
+res_prim_Ndropped <- rbind(T1_adj$Ndropped, T2_adj$Ndropped, T3_adj$Ndropped, 
+                    HR1_adj$Ndropped, HR2_adj$Ndropped, HR3_adj$Ndropped,
+                    HR1_strat_adj[[7]],HR1_strat_adj[[14]],HR1_strat_adj[[21]],
+                    HR2_strat_adj[[7]],HR2_strat_adj[[14]],HR2_strat_adj[[21]],
+                    HR3_strat_adj[[7]],HR3_strat_adj[[14]],HR3_strat_adj[[21]])
+res_prim_Ndropped
+res_H2S_Ndropped <- rbind(h2s.T1_adj$Ndropped, h2s.T2_adj$Ndropped, h2s.T3_adj$Ndropped,
+                   h2s.HR1_adj$Ndropped, h2s.HR2_adj$Ndropped, h2s.HR3_adj$Ndropped,
+                   h2s.HR1_strat_adj[[7]],h2s.HR1_strat_adj[[14]],h2s.HR1_strat_adj[[21]],
+                   h2s.HR2_strat_adj[[7]],h2s.HR2_strat_adj[[14]],h2s.HR2_strat_adj[[21]],
+                   h2s.HR3_strat_adj[[7]],h2s.HR3_strat_adj[[14]],h2s.HR3_strat_adj[[21]])
+res_H2S_Ndropped
 
 
 
