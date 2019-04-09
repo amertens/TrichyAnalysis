@@ -83,7 +83,9 @@ SPDF <- subset(wrld_simpl, NAME=="India")
 
 
 
-
+#greyscale and colorblind friendly colorss
+#cols=c("#56B4E9","#D55E00")
+cols=c("#f7fcb9","#31a354")
 
 # Main Map
 xrange=c(78,79)
@@ -91,7 +93,7 @@ yrange=c(10.5,11.5)
 p1<-ggplot() +
   geom_polygon(data=trichy, aes(long,lat, group=group), colour="grey40", fill=NA)+
   geom_point(aes(x = long, y = lat, fill=`Intervention\nstatus`, group=`Intervention\nstatus`), colour="grey20", pch=21, data = df, size=3, alpha=0.7)   + 
-  scale_fill_manual(values = c("#56B4E9","#D55E00")) +
+  scale_fill_manual(values = cols) +
   geom_text(data=munnames, aes(x=X1+0.02, y=X2+0.08,label=label), size=3, colour="grey20")+
   coord_equal()+theme_bw()+xlab("")+ylab("")+
   theme(axis.text =element_blank(), strip.background= element_blank(), strip.text.x = element_text(size = 16),axis.ticks = element_blank(),
