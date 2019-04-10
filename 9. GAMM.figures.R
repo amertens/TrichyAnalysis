@@ -5,6 +5,7 @@ library(tidyverse)
 library(colourpicker)
 library(cowplot)
 library(stringr)
+source()
 
     #plot parameters
     theme_set(theme_bw())
@@ -20,45 +21,51 @@ library(stringr)
 
 
 #------------------------------
-# Function to combine plots 
+# Functions to combine plots 
 # into one figure
 #------------------------------
-PR_plotfun <- function(df, xlab="",title="", yticks){
-
-  df$strat <- factor(df$strat, levels=unique(df$strat))
-  df$lag <- factor(df$lag, levels=unique(df$lag))
-
-  p <-ggplot(df, aes(x=strat)) +
-      geom_point(aes(y=PR, fill=strat, color=strat), size = 1) +
-      geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
-                     alpha=0.5, size = 3) +
-      labs(x = xlab, y = "Prevalence Ratio") +
-      geom_hline(yintercept = 1) +
-      coord_cartesian(ylim=range(yticks)) +
-      scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
-      scale_fill_manual(name = "strat", values=cols) +
-      scale_colour_manual(name = "strat",values=cols) +
-      theme(strip.background = element_blank(),
-        legend.position="none",
-        strip.text.x = element_text(size=12),
-        axis.text.x = element_text(size=12, angle = 45, hjust = 1),
-        panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-      facet_wrap(~lag,  scales = "fixed") +
-      ggtitle(title)
-  return(p)
-}
-
-
+    
+#axis formatting
+scaleFUN <- function(x) sprintf("%.2f", x)
+    
+trichy_PR_plotfun <- function(df, xlab="",title="", yticks=c(0.125,0.25,0.5,1,2,4,8), rotate_xlab=T){
+      
+      df$strat <- factor(df$strat, levels=unique(df$strat))
+      df$lag <- factor(df$lag, levels=unique(df$lag))
+      
+      p<-ggplot(df, aes(x=strat)) +
+        geom_point(aes(y=PR, fill=strat, color=strat), size = 4) +
+        geom_linerange(aes( ymin=ci.lb, ymax=ci.ub, color=strat),
+                       alpha=0.5, size = 3) +
+        labs(x = xlab, y = "Prevalence Ratio") +
+        geom_hline(yintercept = 1) +
+        coord_cartesian(ylim=range(yticks)) +
+        scale_y_continuous(breaks=yticks, trans='log10', labels=scaleFUN) +
+        scale_fill_manual(name = "strat", values=cols) +
+        scale_colour_manual(name = "strat",values=cols) +
+        theme(strip.background = element_blank(),
+              legend.position="none",
+              strip.text.x = element_text(size=12)) +
+        facet_wrap(~lag,  scales = "fixed") +
+        ggtitle(title)
+      
+      if(rotate_xlab){
+        p <- p + theme(axis.text.x = element_text(size=12, angle = 45, hjust = 1))
+      }else{
+        p <- p + theme(axis.text.x = element_text(size=12))
+      }
+      
+      return(p)
+    }
 
 trichy_multiplot <- function(d){
-
 
     #Clean data frames
      d$Xvar <- d$exposure
      d$lag <- str_split_fixed(d$exposure, "Q|lag",2)[,2]
      d$exposure <- str_split_fixed(d$exposure, "Q|lag",2)[,1]
 
-    d$quartile<-str_sub( str_split_fixed(rownames(d), "Q",2)[,2],1,1)
+    d$quartile<-str_sub( str_split_fixed(d$rowname, "Q",2)[,2],1,1)
     d$strat[d$strat=="Unstratified" & d$quartile!=""] <- d$quartile[d$strat=="Unstratified" & d$quartile!=""]
 
     #Add blank rows for reference levels
@@ -66,8 +73,8 @@ trichy_multiplot <- function(d){
       temp_blank <- d[1:3,]
       temp_blank$quartile <- 1
       temp_blank$strat <- "(ref.)"
-          if(d$outcome!="H2S"){temp_blank$lag <- c("7","14","21")}else{
-            temp_blank$lag <- c("1","7","14")
+          if(d$outcome!="H2S"){temp_blank$lag <- c("8","15","22")}else{
+            temp_blank$lag <- c("1","8","15")
           }
       temp_blank$PR <- 1
       temp_blank$ci.lb <- temp_blank$ci.ub <-temp_blank$Xvar <- NA
@@ -76,13 +83,13 @@ trichy_multiplot <- function(d){
 
       #Clean up labels
     if(d$outcome!="H2S"){
-    d$lag[d$lag=="7"] <- "One week lag"
-    d$lag[d$lag=="14"] <- "Two week lag"
-    d$lag[d$lag=="21"] <- "Three week lag"
+    d$lag[d$lag=="8"] <- "One week lag"
+    d$lag[d$lag=="15"] <- "Two week lag"
+    d$lag[d$lag=="22"] <- "Three week lag"
     }else{
     d$lag[d$lag=="1"] <- "One week lag"
-    d$lag[d$lag=="7"] <- "Two week lag"
-    d$lag[d$lag=="14"] <- "Three week lag"
+    d$lag[d$lag=="8"] <- "Two week lag"
+    d$lag[d$lag=="15"] <- "Three week lag"
     }
     d$strat[d$strat=="2"] <- "Q2"
     d$strat[d$strat=="3"] <- "Q3"
@@ -105,19 +112,19 @@ trichy_multiplot <- function(d){
 
     ptemp <- prain <- ptempH2s <- pH2S <- NULL
       if(nrow(d1)>0){
-        ptemp <- PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Prevalence ratios of diarrhea across quartiles of weekly mean temperature"), yticks=c(0.5,1,2,4,8))
+        ptemp <- trichy_PR_plotfun(df=d1, xlab="Quartile contrast", title=paste0("Prevalence ratios of diarrhea across quartiles of weekly mean temperature"), yticks=c(0.5,1,2,4,8), rotate_xlab=F)
       }
 
       if(nrow(d2)>0){
-        prain <- PR_plotfun(df=d2, xlab="60-day rain trend", title=paste0("Heavy rainfall - diarrhea association, unstratified and stratified by 60-day rain trends"), yticks=c(0.125,0.25,0.5,1,2,4))
+        prain <- trichy_PR_plotfun(df=d2, xlab="60-day rain trend", title=paste0("Heavy rainfall - diarrhea association, unstratified and stratified by 60-day rain trends"), yticks=c(0.125,0.25,0.5,1,2,4))
       }
 
       if(nrow(d3)>0){
-        ptempH2s <- PR_plotfun(df=d3, xlab="Quartile contrast", title=expression('Prevalence ratios of drinking water H'[2]*'S across quartiles of weekly mean temperature'), yticks=c(0.75, 0.87, 1, 1.15, 1.33))
+        ptempH2s <- trichy_PR_plotfun(df=d3, xlab="Quartile contrast", title=expression('Prevalence ratios of drinking water H'[2]*'S across quartiles of weekly mean temperature'), yticks=c(0.75, 0.87, 1, 1.15, 1.33), rotate_xlab=F)
       }
 
       if(nrow(d4)>0){
-        pH2S <- PR_plotfun(df=d4, xlab="60-day rain trend", title=expression('Heavy rainfall - drinking water H'[2]*'S association, unstratified and stratified by 60-day rain trends'), yticks=c(0.75, 0.87, 1, 1.15, 1.33))
+        pH2S <- trichy_PR_plotfun(df=d4, xlab="60-day rain trend", title=expression('Heavy rainfall - drinking water H'[2]*'S association, unstratified and stratified by 60-day rain trends'), yticks=c(0.75, 0.87, 1, 1.15, 1.33))
       }
     plist <- list(ptemp, prain, ptempH2s,pH2S)
     names(plist) <- seq_along(plist)
@@ -142,24 +149,21 @@ trichy_multiplot <- function(d){
 load("C:/Users/andre/Dropbox/Trichy analysis/Results/GAMM_results.Rdata")
 
 
-
-#primary unadjusted
-res_prim <- rbind(T1, T2, T3, HR1, HR2, HR3, HR1_strat, HR2_strat, HR3_strat)
-
 #primary adjusted
-res_prim_adj <- rbind(T1_adj, T2_adj, T3_adj, 
-                      HR1_adj, HR2_adj, HR3_adj,
-                      HR1_strat_adj, HR2_strat_adj, HR3_strat_adj)
+res_prim_adj <- list(T1_adj$`resdf`, T2_adj$`resdf`, T3_adj$`resdf`, 
+                      HR1_adj$`resdf`, HR2_adj$`resdf`, HR3_adj$`resdf`,
+                      HR1_strat_adj[[1]], HR1_strat_adj[[6]], HR1_strat_adj[[11]],
+                      HR2_strat_adj[[1]], HR2_strat_adj[[6]], HR2_strat_adj[[11]],
+                      HR3_strat_adj[[1]], HR3_strat_adj[[6]], HR3_strat_adj[[11]])
+res_prim_adj <- rbind_all(lapply(res_prim_adj, add_rownames))
 
 #h2s
-res_H2S <- rbind( h2s.T1, h2s.T2, h2s.T3,
- h2s.HR1, h2s.HR2, h2s.HR3,
- h2s.HR1_strat, h2s.HR2_strat, h2s.HR3_strat)
-
-res_H2S_adj <- rbind(h2s.T1_adj, h2s.T2_adj, h2s.T3_adj,
-                     h2s.HR1_adj, h2s.HR2_adj, h2s.HR3_adj,
-h2s.HR1_strat_adj, h2s.HR2_strat_adj, h2s.HR3_strat_adj)
-
+res_H2S_adj <- list(h2s.T1_adj$`resdf`, h2s.T2_adj$`resdf`, h2s.T3_adj$`resdf`,
+                     h2s.HR1_adj$`resdf`, h2s.HR2_adj$`resdf`, h2s.HR3_adj$`resdf`,
+                     h2s.HR1_strat_adj[[1]], h2s.HR1_strat_adj[[6]], h2s.HR1_strat_adj[[11]],
+                     h2s.HR2_strat_adj[[1]], h2s.HR2_strat_adj[[6]], h2s.HR2_strat_adj[[11]],
+                     h2s.HR3_strat_adj[[1]], h2s.HR3_strat_adj[[6]], h2s.HR3_strat_adj[[11]])
+res_H2S_adj <- rbind_all(lapply(res_H2S_adj, add_rownames))
 
 
 
